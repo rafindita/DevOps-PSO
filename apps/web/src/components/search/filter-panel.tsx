@@ -32,7 +32,7 @@ function FilterContent({ facets }: FilterPanelProps) {
 	return (
 		<div className="space-y-5">
 			<div className="flex items-center justify-between">
-				<span className="font-semibold text-sm">Filters</span>
+				<span className="font-bold text-base">Filters</span>
 				{activeFilterCount > 0 && (
 					<button
 						className="flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground"
@@ -132,13 +132,14 @@ export function FilterPanel({ facets }: FilterPanelProps) {
 				</Button>
 			</div>
 
-			{/* Desktop sidebar / Mobile collapsible */}
 			<aside
 				className={`w-full shrink-0 lg:w-64 ${
 					mobileOpen ? "block" : "hidden lg:block"
 				}`}
 			>
-				<FilterContent facets={facets} />
+				<div className="sticky top-24 rounded-xl border border-sidebar-border bg-sidebar p-5 text-sidebar-foreground">
+					<FilterContent facets={facets} />
+				</div>
 			</aside>
 		</>
 	);

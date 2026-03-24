@@ -21,7 +21,7 @@ function storeSearchState() {
 
 export function ResultCard({ paper }: ResultCardProps) {
 	return (
-		<Card className="transition-colors hover:border-primary">
+		<Card className="transition-colors hover:border-primary" variant="elevated">
 			<CardHeader>
 				<Link
 					onClick={storeSearchState}

@@ -1,17 +1,37 @@
 import { cn } from "@scholar-seek/ui/lib/utils";
+import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
+
+const cardVariants = cva(
+	"group/card flex flex-col gap-4 overflow-hidden bg-card py-4 text-card-foreground text-xs/relaxed ring-1 ring-foreground/10 has-[>img:first-child]:pt-0 has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-none *:[img:last-child]:rounded-none",
+	{
+		variants: {
+			variant: {
+				default: "rounded-none",
+				elevated:
+					"rounded-lg shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:ring-primary/20",
+			},
+			size: {
+				default: "gap-4",
+				sm: "gap-2 py-3 has-data-[slot=card-footer]:pb-0",
+			},
+		},
+		defaultVariants: {
+			variant: "default",
+			size: "default",
+		},
+	}
+);
 
 function Card({
 	className,
+	variant = "default",
 	size = "default",
 	...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+}: React.ComponentProps<"div"> & VariantProps<typeof cardVariants>) {
 	return (
 		<div
-			className={cn(
-				"group/card flex flex-col gap-4 overflow-hidden rounded-none bg-card py-4 text-card-foreground text-xs/relaxed ring-1 ring-foreground/10 has-[>img:first-child]:pt-0 has-data-[slot=card-footer]:pb-0 data-[size=sm]:gap-2 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-none *:[img:last-child]:rounded-none",
-				className
-			)}
+			className={cn(cardVariants({ variant, size }), className)}
 			data-size={size}
 			data-slot="card"
 			{...props}

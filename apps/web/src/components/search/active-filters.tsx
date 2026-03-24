@@ -48,7 +48,7 @@ interface FilterProviderProps {
 }
 
 const YEAR_MIN = 1990;
-const YEAR_MAX = 2024;
+const YEAR_MAX = new Date().getFullYear();
 
 export function FilterProvider({ children, search }: FilterProviderProps) {
 	const [authorFilter, setAuthorFilter] = useState(search.authorFilter ?? "");

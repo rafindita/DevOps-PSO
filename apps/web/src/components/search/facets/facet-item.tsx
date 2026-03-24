@@ -11,7 +11,7 @@ export function FacetItem({ value, count, checked, onToggle }: FacetItemProps) {
 			<div className="flex min-w-0 items-center gap-2">
 				<input
 					checked={checked}
-					className="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-input accent-foreground"
+					className="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-border accent-primary"
 					onChange={() => onToggle(value)}
 					type="checkbox"
 				/>

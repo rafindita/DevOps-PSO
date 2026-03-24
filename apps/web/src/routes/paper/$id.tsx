@@ -14,6 +14,10 @@ import { usePaper, useRelatedPapers } from "../../lib/hooks/use-papers";
 import { getSearchState } from "../../lib/search-state";
 import { formatDate } from "../../lib/utils";
 
+function getYear(dateString: string): string {
+	return new Date(dateString).getFullYear().toString();
+}
+
 const paperSchema = z.object({
 	id: z.string(),
 });
@@ -74,15 +78,21 @@ function PaperPage() {
 			<div className="mx-auto max-w-3xl space-y-6">
 				<div>
 					<a
-						className="text-muted-foreground text-sm hover:underline"
+						className="text-muted-foreground text-sm transition-colors hover:text-foreground"
 						href={backUrl}
 					>
 						← Back to search
 					</a>
-					<h1 className="mt-4 font-bold text-3xl">{paper.title}</h1>
-					<div className="mt-4 flex flex-wrap gap-2">
+					<h1 className="mt-4 font-bold text-3xl leading-tight">
+						{paper.title}
+					</h1>
+					<div className="mt-4 flex flex-wrap gap-1.5">
 						{paper.authors.map((author) => (
-							<Badge key={author} variant="secondary">
+							<Badge
+								className="transition-all hover:scale-105 hover:bg-secondary/80"
+								key={author}
+								variant="secondary"
+							>
 								{author}
 							</Badge>
 						))}
@@ -91,7 +101,7 @@ function PaperPage() {
 
 				<Separator />
 
-				<Card>
+				<Card variant="elevated">
 					<CardHeader>
 						<CardTitle>Abstract</CardTitle>
 					</CardHeader>
@@ -102,24 +112,26 @@ function PaperPage() {
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card variant="elevated">
 					<CardHeader>
 						<CardTitle>Details</CardTitle>
 					</CardHeader>
-					<CardContent className="space-y-2">
-						<div className="flex justify-between">
+					<CardContent className="space-y-3">
+						<div className="flex items-center justify-between">
 							<span className="text-muted-foreground">Journal</span>
-							<span>{paper.journal}</span>
+							<span className="font-medium">{paper.journal}</span>
 						</div>
-						<div className="flex justify-between">
+						<div className="flex items-center justify-between">
 							<span className="text-muted-foreground">Published</span>
-							<span>{formatDate(paper.publishedAt)}</span>
+							<span className="font-medium">
+								{formatDate(paper.publishedAt)}
+							</span>
 						</div>
 						{paper.doi && (
-							<div className="flex justify-between">
+							<div className="flex items-center justify-between">
 								<span className="text-muted-foreground">DOI</span>
 								<a
-									className="text-primary hover:underline"
+									className="font-medium text-primary transition-colors hover:underline"
 									href={`https://doi.org/${paper.doi}`}
 									rel="noopener noreferrer"
 									target="_blank"
@@ -128,10 +140,10 @@ function PaperPage() {
 								</a>
 							</div>
 						)}
-						<div className="flex justify-between">
+						<div className="flex items-center justify-between">
 							<span className="text-muted-foreground">Source</span>
 							<a
-								className="text-primary hover:underline"
+								className="font-medium text-primary transition-colors hover:underline"
 								href={paper.sourceUrl}
 								rel="noopener noreferrer"
 								target="_blank"
@@ -143,14 +155,18 @@ function PaperPage() {
 				</Card>
 
 				{paper.keywords && paper.keywords.length > 0 && (
-					<Card>
+					<Card variant="elevated">
 						<CardHeader>
 							<CardTitle>Keywords</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<div className="flex flex-wrap gap-2">
+							<div className="flex flex-wrap gap-1.5">
 								{paper.keywords.map((keyword) => (
-									<Badge key={keyword} variant="outline">
+									<Badge
+										className="transition-all hover:scale-105 hover:bg-primary/15"
+										key={keyword}
+										variant="keyword"
+									>
 										{keyword}
 									</Badge>
 								))}
@@ -160,19 +176,29 @@ function PaperPage() {
 				)}
 
 				{related && related.length > 0 && (
-					<Card>
+					<Card variant="elevated">
 						<CardHeader>
 							<CardTitle>Related Papers</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-2">
 							{related.slice(0, 5).map((p) => (
 								<Link
-									className="block text-primary hover:underline"
+									className="group block rounded-lg p-3 transition-all hover:bg-muted/50"
 									key={p.id}
 									params={{ id: p.id }}
 									to="/paper/$id"
 								>
-									{p.title}
+									<h3 className="line-clamp-2 font-medium text-sm transition-colors group-hover:text-primary">
+										{p.title}
+									</h3>
+									<div className="mt-1.5 flex items-center gap-2 text-muted-foreground text-xs">
+										<span>
+											{p.authors[0]}
+											{p.authors.length > 1 && " et al."}
+										</span>
+										<span className="text-border">•</span>
+										<span>{getYear(p.publishedAt)}</span>
+									</div>
 								</Link>
 							))}
 						</CardContent>

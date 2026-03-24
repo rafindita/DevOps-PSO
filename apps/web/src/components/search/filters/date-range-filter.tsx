@@ -51,10 +51,9 @@ export function DateRangeFilter({
 
 	return (
 		<div className="space-y-3">
-			<div className="flex items-center justify-between text-muted-foreground text-xs">
-				<span>{localFrom}</span>
-				<span>{localTo}</span>
-			</div>
+			<p className="text-center text-muted-foreground text-sm">
+				{localFrom} — {localTo}
+			</p>
 
 			<div className="space-y-1">
 				<label className="text-muted-foreground text-xs" htmlFor="year-from">

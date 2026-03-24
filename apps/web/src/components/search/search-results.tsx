@@ -4,6 +4,7 @@ import { createContext, type ReactNode, useContext, useState } from "react";
 import { useSearchPapers } from "../../lib/hooks/use-papers";
 import type { Facets, SortBy } from "../../types/paper";
 import { FilterProvider, useFilterContext } from "./active-filters";
+import { EmptyState } from "./empty-state";
 import { FilterPanel } from "./filter-panel";
 import { PageSizeSelector } from "./page-size-selector";
 import { Pagination } from "./pagination";
@@ -200,22 +201,11 @@ function SearchResultsContent({
 		return (
 			<div className="space-y-4">
 				<ActiveFiltersDisplay />
-				<div className="space-y-2 text-center text-muted-foreground">
-					<p>No results found for &ldquo;{query}&rdquo;</p>
-					{hasActiveFilters && (
-						<p className="text-sm">
-							Try{" "}
-							<button
-								className="text-primary hover:underline"
-								onClick={clearAllFilters}
-								type="button"
-							>
-								clearing your filters
-							</button>
-							.
-						</p>
-					)}
-				</div>
+				<EmptyState
+					hasActiveFilters={hasActiveFilters}
+					onClearFilters={clearAllFilters}
+					query={query}
+				/>
 			</div>
 		);
 	}

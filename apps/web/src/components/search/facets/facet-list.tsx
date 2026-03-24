@@ -1,3 +1,4 @@
+import { Input } from "@scholar-seek/ui/components/input";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useState } from "react";
 import type { FacetItem as FacetItemType } from "../../../types/paper";
@@ -48,11 +49,10 @@ export function FacetList({
 			{searchable && (
 				<div className="relative mb-2">
 					<Search className="absolute top-1/2 left-2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
-					<input
-						className="h-7 w-full rounded border border-input bg-background pr-2 pl-6 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+					<Input
+						className="h-7 pl-6 text-xs"
 						onChange={(e) => setSearchTerm(e.target.value)}
 						placeholder="Search..."
-						type="text"
 						value={searchTerm}
 					/>
 				</div>
