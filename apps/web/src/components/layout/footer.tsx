@@ -1,0 +1,54 @@
+import { Link } from "@tanstack/react-router";
+import { Github, Twitter } from "lucide-react";
+
+export function Footer() {
+	return (
+		<footer className="border-t bg-muted/20">
+			<div className="container mx-auto px-4 py-8">
+				<div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+					<div className="text-center md:text-left">
+						<p className="font-semibold">Scholar Seek</p>
+						<p className="text-muted-foreground text-sm">
+							Academic research discovery platform.
+						</p>
+					</div>
+					<div className="flex gap-4 text-muted-foreground text-sm">
+						<Link className="transition hover:text-foreground" to="/">
+							Home
+						</Link>
+						<a className="transition hover:text-foreground" href="#">
+							Browse All
+						</a>
+						<a className="transition hover:text-foreground" href="#">
+							About
+						</a>
+						<a className="transition hover:text-foreground" href="#">
+							Terms
+						</a>
+					</div>
+				</div>
+				<div className="mt-8 flex flex-col items-center justify-between gap-4 border-t pt-8 text-muted-foreground text-xs md:flex-row">
+					<p>©{new Date().getFullYear()} Scholar Seek. Demo project.</p>
+					<div className="flex items-center gap-4">
+						<a
+							className="hover:text-foreground"
+							href="https://github.com"
+							rel="noreferrer"
+							target="_blank"
+						>
+							<Github className="h-4 w-4" />
+						</a>
+						<a
+							className="hover:text-foreground"
+							href="https://twitter.com"
+							rel="noreferrer"
+							target="_blank"
+						>
+							<Twitter className="h-4 w-4" />
+						</a>
+					</div>
+				</div>
+			</div>
+		</footer>
+	);
+}

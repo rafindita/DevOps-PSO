@@ -7,11 +7,12 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
-import Header from "../components/header";
+import { Footer } from "../components/layout/footer";
+import Header from "../components/layout/header";
 
 import appCss from "../index.css?url";
 
-export type RouterAppContext = object;
+export type RouterAppContext = {};
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
 	head: () => ({
@@ -24,7 +25,12 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "My App",
+				title: "Scholar Seek - Academic Research Discovery",
+			},
+			{
+				name: "description",
+				content:
+					"Search and discover academic papers across all scientific disciplines.",
 			},
 		],
 		links: [
@@ -40,14 +46,17 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootDocument() {
 	return (
-		<html className="dark" lang="en">
+		<html lang="en">
 			<head>
 				<HeadContent />
 			</head>
 			<body>
-				<div className="grid h-svh grid-rows-[auto_1fr]">
+				<div className="flex min-h-screen flex-col">
 					<Header />
-					<Outlet />
+					<main className="flex-1">
+						<Outlet />
+					</main>
+					<Footer />
 				</div>
 				<Toaster richColors />
 				<TanStackRouterDevtools position="bottom-left" />

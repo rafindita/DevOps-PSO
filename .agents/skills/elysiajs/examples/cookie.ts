@@ -32,7 +32,7 @@ const app = new Elysia({
 		({ cookie: { name } }) => {
 			name.value = "seminar: Rio";
 			name.value = "seminar: Himari";
-			name.maxAge = 86400;
+			name.maxAge = 86_400;
 
 			return name.value;
 		},

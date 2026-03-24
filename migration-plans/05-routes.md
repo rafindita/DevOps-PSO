@@ -353,7 +353,29 @@ function PaperPage() {
 
 ---
 
-### Step 5.4: Delete Old Loader Component (if needed)
+### Step 5.4: Update Footer "Browse All" Link
+
+**File**: `apps/web/src/components/layout/footer.tsx` (update line 19)
+
+Replace the placeholder `<a href="#">` with proper TanStack Router `<Link>`:
+
+```typescript
+// Before (from Phase 3 - placeholder)
+<a className="transition hover:text-foreground" href="#">
+    Browse All
+</a>
+
+// After
+<Link className="transition hover:text-foreground" to="/search">
+    Browse All
+</Link>
+```
+
+This connects the footer navigation to the newly created search page.
+
+---
+
+### Step 5.5: Delete Old Loader Component (if needed)
 
 **Command**:
 ```bash

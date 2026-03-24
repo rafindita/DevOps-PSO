@@ -7,6 +7,10 @@ Create the layout components: Header, Footer, and ThemeToggle.
 - Phase 2 completed (mock data and hooks exist)
 - UI components available (@scholar-seek/ui)
 
+## Known Issues / Placeholders
+1. **Barrel file (index.ts)**: Skipped due to linter performance rules - import directly from source files
+2. **Footer "Browse All" link**: Uses placeholder `<a href="#">` because `/search` route is created in Phase 5 - will be updated then
+
 ---
 
 ## Steps
@@ -132,9 +136,10 @@ export function Footer() {
 						<Link className="transition hover:text-foreground" to="/">
 							Home
 						</Link>
-						<Link className="transition hover:text-foreground" to="/search">
-							Browse All
-						</Link>
+                        {/* Note: /search route doesn't exist yet - will be updated in Phase 5 */}
+                        <a className="transition hover:text-foreground" href="#">
+                            Browse All
+                        </a>
 						<a className="transition hover:text-foreground" href="#">
 							About
 						</a>
@@ -174,13 +179,16 @@ export function Footer() {
 
 ### Step 3.4: Create Layout Components Index
 
-**File**: `apps/web/src/components/layout/index.ts` (create new)
-
-```typescript
-export { default as Header } from "./header";
-export { Footer } from "./footer";
-export { ThemeToggle } from "./theme-toggle";
-```
+> **SKIPPED**: This step is intentionally skipped. Barrel files (`index.ts` that re-exports modules) are flagged by our linter as a performance anti-pattern. Import components directly from their source files instead:
+> 
+> ```typescript
+> // ❌ Avoid
+> import { Header, Footer } from "../components/layout";
+> 
+> // ✅ Preferred
+> import { Footer } from "../components/layout/footer";
+> import Header from "../components/layout/header";
+> ```
 
 ---
 
@@ -273,7 +281,7 @@ function RootDocument() {
 - [ ] `apps/web/src/components/layout/theme-toggle.tsx` created
 - [ ] `apps/web/src/components/layout/header.tsx` created
 - [ ] `apps/web/src/components/layout/footer.tsx` created
-- [ ] `apps/web/src/components/layout/index.ts` created
+- [ ] ~~`apps/web/src/components/layout/index.ts` created~~ (skipped - barrel files are a linter anti-pattern)
 - [ ] Old `apps/web/src/components/header.tsx` deleted
 - [ ] `apps/web/src/routes/__root.tsx` updated with new layout
 - [ ] Theme toggle works with localStorage persistence
