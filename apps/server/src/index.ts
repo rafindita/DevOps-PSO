@@ -2,7 +2,7 @@ import { cors } from "@elysiajs/cors";
 import { env } from "@scholar-seek/env/server";
 import { Elysia } from "elysia";
 
-const app = new Elysia()
+new Elysia()
 	.use(
 		cors({
 			origin: env.CORS_ORIGIN,

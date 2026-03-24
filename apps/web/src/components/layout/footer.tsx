@@ -16,15 +16,9 @@ export function Footer() {
 						<Link className="transition hover:text-foreground" to="/">
 							Home
 						</Link>
-						<a className="transition hover:text-foreground" href="#">
+						<Link className="transition hover:text-foreground" to="/search">
 							Browse All
-						</a>
-						<a className="transition hover:text-foreground" href="#">
-							About
-						</a>
-						<a className="transition hover:text-foreground" href="#">
-							Terms
-						</a>
+						</Link>
 					</div>
 				</div>
 				<div className="mt-8 flex flex-col items-center justify-between gap-4 border-t pt-8 text-muted-foreground text-xs md:flex-row">
