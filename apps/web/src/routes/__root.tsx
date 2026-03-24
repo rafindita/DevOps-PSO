@@ -52,6 +52,20 @@ function RootDocument() {
 		<html lang="en">
 			<head>
 				<HeadContent />
+				<script
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: Theme script must run before hydration
+					dangerouslySetInnerHTML={{
+						__html: `
+							(function() {
+								const saved = localStorage.getItem('theme');
+								const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+								if (saved === 'dark' || (!saved && prefersDark)) {
+									document.documentElement.classList.add('dark');
+								}
+							})();
+						`,
+					}}
+				/>
 			</head>
 			<body>
 				<div className="flex min-h-screen flex-col">
