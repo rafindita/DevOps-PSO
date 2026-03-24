@@ -353,7 +353,46 @@ function PaperPage() {
 
 ---
 
-### Step 5.4: Update Footer "Browse All" Link
+### Step 5.4: Update ResultCard Navigation Links
+
+**File**: `apps/web/src/components/search/result-card.tsx` (update)
+
+In Phase 4, the ResultCard component was created without navigation links since the `/paper/$id` route didn't exist yet. Now that the paper detail route is being created, add the navigation links back:
+
+```typescript
+// Add import
+import { Link } from "@tanstack/react-router";
+
+// Wrap title in Link
+<CardHeader>
+	<Link to="/paper/$id" params={{ id: paper.id }}>
+		<CardTitle className="line-clamp-2 cursor-pointer text-lg hover:text-primary">
+			{paper.title}
+		</CardTitle>
+	</Link>
+</CardHeader>
+
+// Wrap content in Link (around abstract and authors)
+<Link className="block" to="/paper/$id" params={{ id: paper.id }}>
+	<p className="line-clamp-2 text-muted-foreground text-sm">
+		{paper.abstract}
+	</p>
+	<div className="mt-2 flex flex-wrap gap-1">
+		{paper.authors.slice(0, 3).map((author) => (
+			<Badge key={author} variant="secondary">
+				{author}
+			</Badge>
+		))}
+		{paper.authors.length > 3 && (
+			<Badge variant="outline">+{paper.authors.length - 3}</Badge>
+		)}
+	</div>
+</Link>
+```
+
+---
+
+### Step 5.6: Update Footer "Browse All" Link
 
 **File**: `apps/web/src/components/layout/footer.tsx` (update line 19)
 
@@ -375,7 +414,7 @@ This connects the footer navigation to the newly created search page.
 
 ---
 
-### Step 5.5: Delete Old Loader Component (if needed)
+### Step 5.7: Delete Old Loader Component (if needed)
 
 **Command**:
 ```bash
