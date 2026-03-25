@@ -1,7 +1,10 @@
 import { env } from "@scholar-seek/env/server";
 import { drizzle } from "drizzle-orm/node-postgres";
 
-// biome-ignore lint/performance/noNamespaceImport: schema namespace needed for drizzle introspection
-import * as schema from "./schema";
+// Schema import
+import { crawlHistory as crawlHistorySchema } from "./schema/crawl-history";
+import { papers as papersSchema } from "./schema/papers";
+
+const schema = { ...papersSchema, ...crawlHistorySchema };
 
 export const db = drizzle(env.DATABASE_URL, { schema });
