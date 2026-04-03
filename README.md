@@ -1,5 +1,18 @@
 # scholar-seek
 
+<!--toc:start-->
+- [scholar-seek](#scholar-seek)
+  - [Features](#features)
+  - [Getting Started](#getting-started)
+  - [Database Setup](#database-setup)
+  - [UI Customization](#ui-customization)
+    - [Add more shared components](#add-more-shared-components)
+    - [Add app-specific blocks](#add-app-specific-blocks)
+  - [Git Hooks and Formatting](#git-hooks-and-formatting)
+  - [Project Structure](#project-structure)
+  - [Available Scripts](#available-scripts)
+<!--toc:end-->
+
 This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Elysia, and more.
 
 ## Features
