@@ -13,10 +13,10 @@ export function Footer() {
 						</p>
 					</div>
 					<div className="flex gap-4 text-muted-foreground text-sm">
-						<Link className="transition hover:text-foreground" to="/">
+						<Link className="transition-colors hover:text-foreground" to="/">
 							Home
 						</Link>
-						<Link className="transition hover:text-foreground" to="/search">
+						<Link className="transition-colors hover:text-foreground" to="/search">
 							Browse All
 						</Link>
 					</div>
@@ -25,20 +25,22 @@ export function Footer() {
 					<p>©{new Date().getFullYear()} Scholar Seek. Demo project.</p>
 					<div className="flex items-center gap-4">
 						<a
+							aria-label="GitHub"
 							className="hover:text-foreground"
 							href="https://github.com"
 							rel="noreferrer"
 							target="_blank"
 						>
-							<Github className="h-4 w-4" />
+							<Github aria-hidden="true" className="h-4 w-4" />
 						</a>
 						<a
+							aria-label="Twitter"
 							className="hover:text-foreground"
 							href="https://twitter.com"
 							rel="noreferrer"
 							target="_blank"
 						>
-							<Twitter className="h-4 w-4" />
+							<Twitter aria-hidden="true" className="h-4 w-4" />
 						</a>
 					</div>
 				</div>

@@ -1,9 +1,9 @@
 import { Skeleton } from "@scholar-seek/ui/components/skeleton";
 import { X } from "lucide-react";
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { useSearchPapers } from "../../lib/hooks/use-papers";
 import type { Facets, SortBy } from "../../types/paper";
-import { FilterProvider, useFilterContext } from "./active-filters";
+import { FilterProvider, type FilterSnapshot, useFilterContext } from "./active-filters";
 import { EmptyState } from "./empty-state";
 import { FilterPanel } from "./filter-panel";
 import { PageSizeSelector } from "./page-size-selector";
@@ -151,9 +151,19 @@ function SearchResultsContent({
 
 	const hasYearFilter = yearFrom !== YEAR_MIN || yearTo !== YEAR_MAX;
 
-	const { data, isLoading, error } = useSearchPapers({
+	// Compute a filter signature so we can detect changes between renders.
+	// When filters change, use page=1 immediately — don't wait for the async
+	// navigation from onPageReset to complete, which would fire one bad request
+	// with the old page number + new filters (causing a server 500).
+	const filterKey = `${authorFilter}|${sortBy}|${yearFrom}|${yearTo}|${journalFilter.join(",")}|${keywordFilter.join(",")}`;
+	const prevFilterKeyRef = useRef(filterKey);
+	const filterChanged = prevFilterKeyRef.current !== filterKey;
+	prevFilterKeyRef.current = filterKey;
+	const effectivePage = filterChanged ? 1 : page;
+
+	const { data, isLoading, isFetching, error } = useSearchPapers({
 		q: query,
-		page,
+		page: effectivePage,
 		pageSize,
 		authorFilter: authorFilter || undefined,
 		journalFilter: journalFilter.length > 0 ? journalFilter : undefined,
@@ -163,10 +173,9 @@ function SearchResultsContent({
 		sortBy,
 	});
 
-	// Update facets when data changes
-	if (data?.facets) {
-		setFacets(data.facets);
-	}
+	useEffect(() => {
+		setFacets(data?.facets);
+	}, [data?.facets, setFacets]);
 
 	if (!query) {
 		return (
@@ -214,7 +223,7 @@ function SearchResultsContent({
 	const end = Math.min(page * pageSize, data.total);
 
 	return (
-		<div className="space-y-4">
+		<div aria-atomic="false" aria-live="polite" className={`space-y-4 transition-opacity duration-150 ${isFetching ? "opacity-50" : "opacity-100"}`}>
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<p className="text-muted-foreground text-sm">
 					Showing {start}–{end} of {data.total} results
@@ -258,6 +267,7 @@ interface SearchResultsProps {
 		yearTo?: number;
 		sortBy?: SortBy;
 	};
+	onFiltersChange?: (filters: FilterSnapshot) => void;
 	onPageChange: (page: number) => void;
 	onPageSizeChange: (size: number) => void;
 	page: number;
@@ -271,10 +281,11 @@ export function SearchResults({
 	pageSize,
 	onPageChange,
 	onPageSizeChange,
+	onFiltersChange,
 	initialFilters = {},
 }: SearchResultsProps) {
 	return (
-		<FilterProvider search={initialFilters}>
+		<FilterProvider onFiltersChange={onFiltersChange} onPageReset={() => onPageChange(1)} search={initialFilters}>
 			<FacetsProvider>
 				<SearchResultsLayout
 					onPageChange={onPageChange}
@@ -298,7 +309,7 @@ function SearchResultsLayout({
 	const { facets } = useFacetsContext();
 
 	return (
-		<div className="flex gap-6">
+		<div className="flex items-start gap-6">
 			<FilterPanel facets={facets} />
 
 			<div className="min-w-0 flex-1">

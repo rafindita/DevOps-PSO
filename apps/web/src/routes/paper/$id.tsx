@@ -10,6 +10,7 @@ import { Skeleton } from "@scholar-seek/ui/components/skeleton";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { ArxivAbstract } from "../../components/paper/arxiv-abstract";
 import { usePaper, useRelatedPapers } from "../../lib/hooks/use-papers";
 import { getSearchState } from "../../lib/search-state";
 import { formatDate } from "../../lib/utils";
@@ -39,14 +40,25 @@ function PaperPage() {
 	const { id } = Route.useParams();
 	const { data: paper, isLoading, error } = usePaper(id);
 	const { data: related } = useRelatedPapers(id);
-	const [backUrl, setBackUrl] = useState("/search");
+	const [backPath, setBackPath] = useState("/search");
 
 	useEffect(() => {
 		const searchState = getSearchState();
 		if (searchState?.url) {
-			setBackUrl(searchState.url);
+			try {
+				const { pathname, search } = new URL(searchState.url);
+				setBackPath(pathname + search);
+			} catch {
+				setBackPath(searchState.url);
+			}
 		}
 	}, []);
+
+	useEffect(() => {
+		if (paper) {
+			document.title = `${paper.title} - Scholar Seek`;
+		}
+	}, [paper]);
 
 	if (isLoading) {
 		return (
@@ -77,24 +89,29 @@ function PaperPage() {
 		<div className="container mx-auto px-4 py-8">
 			<div className="mx-auto max-w-3xl space-y-6">
 				<div>
-					<a
+					<Link
 						className="text-muted-foreground text-sm transition-colors hover:text-foreground"
-						href={backUrl}
+						to={backPath}
 					>
 						← Back to search
-					</a>
+					</Link>
 					<h1 className="mt-4 font-bold text-3xl leading-tight">
 						{paper.title}
 					</h1>
 					<div className="mt-4 flex flex-wrap gap-1.5">
 						{paper.authors.map((author) => (
-							<Badge
-								className="transition-all hover:scale-105 hover:bg-secondary/80"
+							<Link
 								key={author}
-								variant="secondary"
+								search={{ author, q: author }}
+								to="/search"
 							>
-								{author}
-							</Badge>
+								<Badge
+									className="cursor-pointer transition-[transform,background-color] hover:scale-105 hover:bg-secondary/80"
+									variant="secondary"
+								>
+									{author}
+								</Badge>
+							</Link>
 						))}
 					</div>
 				</div>
@@ -106,9 +123,14 @@ function PaperPage() {
 						<CardTitle>Abstract</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<p className="text-muted-foreground leading-relaxed">
-							{paper.abstract || "No abstract available"}
-						</p>
+						{paper.abstract ? (
+							<ArxivAbstract
+								className="text-muted-foreground leading-relaxed"
+								text={paper.abstract}
+							/>
+						) : (
+							<p className="text-muted-foreground">No abstract available</p>
+						)}
 					</CardContent>
 				</Card>
 
@@ -117,9 +139,11 @@ function PaperPage() {
 						<CardTitle>Details</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-3">
-						<div className="flex items-center justify-between">
-							<span className="text-muted-foreground">Journal</span>
-							<span className="font-medium">{paper.journal}</span>
+						<div className="flex items-start justify-between gap-4">
+							<span className="shrink-0 text-muted-foreground">Journal</span>
+							<span className="break-words text-right font-medium">
+								{paper.journal ?? <span className="text-muted-foreground">—</span>}
+							</span>
 						</div>
 						<div className="flex items-center justify-between">
 							<span className="text-muted-foreground">Published</span>
@@ -162,13 +186,18 @@ function PaperPage() {
 						<CardContent>
 							<div className="flex flex-wrap gap-1.5">
 								{paper.keywords.map((keyword) => (
-									<Badge
-										className="transition-all hover:scale-105 hover:bg-primary/15"
+									<Link
 										key={keyword}
-										variant="keyword"
+										search={{ q: keyword }}
+										to="/search"
 									>
-										{keyword}
-									</Badge>
+										<Badge
+											className="cursor-pointer transition-[transform,background-color] hover:scale-105 hover:bg-primary/15"
+											variant="keyword"
+										>
+											{keyword}
+										</Badge>
+									</Link>
 								))}
 							</div>
 						</CardContent>
@@ -183,7 +212,7 @@ function PaperPage() {
 						<CardContent className="space-y-2">
 							{related.slice(0, 5).map((p) => (
 								<Link
-									className="group block rounded-lg p-3 transition-all hover:bg-muted/50"
+									className="group block rounded-lg p-3 transition-colors hover:bg-muted/50"
 									key={p.id}
 									params={{ id: p.id }}
 									to="/paper/$id"

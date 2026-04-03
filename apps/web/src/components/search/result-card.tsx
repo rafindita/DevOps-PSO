@@ -6,6 +6,7 @@ import {
 	CardTitle,
 } from "@scholar-seek/ui/components/card";
 import { Link } from "@tanstack/react-router";
+import { ArxivAbstract } from "../paper/arxiv-abstract";
 import { formatDate } from "../../lib/utils";
 import type { Paper } from "../../types/paper";
 
@@ -40,9 +41,10 @@ export function ResultCard({ paper }: ResultCardProps) {
 					params={{ id: paper.id }}
 					to="/paper/$id"
 				>
-					<p className="line-clamp-2 text-muted-foreground text-sm">
-						{paper.abstract}
-					</p>
+					<ArxivAbstract
+						className="line-clamp-2 text-muted-foreground text-sm"
+						text={paper.abstract ?? ""}
+					/>
 					<div className="mt-2 flex flex-wrap gap-1">
 						{paper.authors.slice(0, 3).map((author) => (
 							<Badge key={author} variant="secondary">
@@ -54,12 +56,17 @@ export function ResultCard({ paper }: ResultCardProps) {
 						)}
 					</div>
 				</Link>
-				<div className="flex items-center justify-between pt-2 text-muted-foreground text-xs">
-					<span>
-						{paper.journal} • {formatDate(paper.publishedAt)}
+				<div className="flex items-center justify-between gap-2 pt-2 text-muted-foreground text-xs">
+					<span
+						className="min-w-0 truncate"
+						title={paper.journal ?? undefined}
+					>
+						{paper.journal
+							? `${paper.journal} • ${formatDate(paper.publishedAt)}`
+							: formatDate(paper.publishedAt)}
 					</span>
 					<a
-						className="text-primary hover:underline"
+						className="shrink-0 text-primary hover:underline"
 						href={paper.sourceUrl}
 						rel="noopener noreferrer"
 						target="_blank"

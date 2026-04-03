@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { SearchParams } from "../../types/paper";
 import { api } from "../api/treaty";
 
@@ -43,6 +43,7 @@ export function useSearchPapers(params: SearchParams) {
 			};
 		},
 		enabled: !!params.q,
+		placeholderData: keepPreviousData,
 	});
 }
 

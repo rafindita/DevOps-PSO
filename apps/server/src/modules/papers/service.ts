@@ -140,11 +140,13 @@ export async function searchPapers(params: {
 		: 20;
 	const sortBy: SortByType = params.sortBy ?? "relevance";
 
-	const conditions: (SQL | undefined)[] = [];
+	// Search-only condition — used for facet computation so facets always
+	// reflect the full result set for the query, not the active filters.
+	const searchConditions: (SQL | undefined)[] = [];
 
 	if (params.q) {
 		const searchPattern = `%${params.q.toLowerCase()}%`;
-		conditions.push(
+		searchConditions.push(
 			or(
 				ilike(papers.title, searchPattern),
 				ilike(papers.abstract, searchPattern),
@@ -155,37 +157,48 @@ export async function searchPapers(params: {
 		);
 	}
 
+	const searchOnlyWhereClause =
+		searchConditions.length > 0 ? and(...searchConditions) : undefined;
+
+	// Filter conditions — applied on top of the search for paginated results.
+	const filterConditions: (SQL | undefined)[] = [...searchConditions];
+
 	if (params.author) {
-		conditions.push(
+		filterConditions.push(
 			sql`${papers.authors}::text ilike ${`%"${params.author}%"`}`
 		);
 	}
 
 	const journals = parseArrayParam(params.journal);
 	if (journals && journals.length > 0) {
-		conditions.push(inArray(papers.journal, journals));
+		filterConditions.push(inArray(papers.journal, journals));
 	}
 
 	const keywords = parseArrayParam(params.keyword);
 	if (keywords && keywords.length > 0) {
-		conditions.push(
-			sql`${papers.keywords}::jsonb ?| ${JSON.stringify(keywords)}`
+		filterConditions.push(
+			or(
+				...keywords.map((k) =>
+					sql`${papers.keywords}::jsonb @> ${JSON.stringify([k])}::jsonb`
+				)
+			)
 		);
 	}
 
 	if (params.yearFrom !== undefined) {
-		conditions.push(
+		filterConditions.push(
 			gte(papers.published_at, new Date(`${params.yearFrom}-01-01`))
 		);
 	}
 
 	if (params.yearTo !== undefined) {
-		conditions.push(
+		filterConditions.push(
 			lte(papers.published_at, new Date(`${params.yearTo}-12-31`))
 		);
 	}
 
-	const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+	const whereClause =
+		filterConditions.length > 0 ? and(...filterConditions) : undefined;
 
 	const offset = (page - 1) * pageSize;
 	const orderBy = buildOrderBy(sortBy);
@@ -214,7 +227,7 @@ export async function searchPapers(params: {
 				published_at: papers.published_at,
 			})
 			.from(papers)
-			.where(whereClause),
+			.where(searchOnlyWhereClause),
 	]);
 
 	const total = Number(countResult[0]?.count ?? 0);
@@ -268,7 +281,11 @@ export async function getRelatedPapers(
 		.where(
 			and(
 				sql`${papers.id} != ${id}`,
-				sql`${papers.keywords}::jsonb ?| ${keywords}`
+				or(
+					...keywords.map((k) =>
+						sql`${papers.keywords}::jsonb @> ${JSON.stringify([k])}::jsonb`
+					)
+				)
 			)
 		)
 		.limit(limit);

@@ -133,12 +133,16 @@ export function FilterPanel({ facets }: FilterPanelProps) {
 			</div>
 
 			<aside
-				className={`w-full shrink-0 lg:w-64 ${
+				aria-label="Filters"
+				className={`w-full shrink-0 self-start lg:w-64 lg:sticky lg:top-4 ${
 					mobileOpen ? "block" : "hidden lg:block"
 				}`}
 			>
-				<div className="sticky top-24 rounded-xl border border-sidebar-border bg-sidebar p-5 text-sidebar-foreground">
-					<FilterContent facets={facets} />
+				<div className="relative rounded-xl border border-sidebar-border bg-sidebar text-sidebar-foreground">
+					<div className="max-h-[calc(100vh-2rem)] overflow-y-auto p-5 [scrollbar-width:none] [&::-webkit-scrollbar]:w-0">
+						<FilterContent facets={facets} />
+					</div>
+					<div className="pointer-events-none absolute right-0 bottom-0 left-0 h-8 rounded-b-xl bg-gradient-to-t from-sidebar to-transparent" />
 				</div>
 			</aside>
 		</>

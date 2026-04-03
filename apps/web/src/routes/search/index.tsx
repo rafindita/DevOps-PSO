@@ -6,6 +6,7 @@ import {
 import { useEffect } from "react";
 import { z } from "zod";
 import { SearchBar } from "../../components/search/search-bar";
+import type { FilterSnapshot } from "../../components/search/active-filters";
 import { SearchResults } from "../../components/search/search-results";
 import { saveSearchState } from "../../lib/search-state";
 import { normalizeToArray } from "../../lib/utils";
@@ -45,7 +46,8 @@ function SearchPage() {
 		sortBy,
 	} = search;
 
-	// Save search state for "Back to search" functionality
+	// Save search state for "Back to search" functionality — runs on every
+	// URL change so filters are always included in the saved URL.
 	useEffect(() => {
 		if (typeof window !== "undefined") {
 			saveSearchState({
@@ -55,7 +57,7 @@ function SearchPage() {
 				pageSize,
 			});
 		}
-	}, [q, page, pageSize]);
+	}, [q, page, pageSize, author, journal, keyword, yearFrom, yearTo, sortBy]);
 
 	const handleSearch = (query: string) => {
 		navigate({
@@ -78,6 +80,24 @@ function SearchPage() {
 		});
 	};
 
+	const handleFiltersChange = (filters: FilterSnapshot) => {
+		navigate({
+			to: "/search",
+			resetScroll: false,
+			search: {
+				q,
+				pageSize,
+				page: 1,
+				author: filters.authorFilter || undefined,
+				journal: filters.journalFilter.length ? filters.journalFilter : undefined,
+				keyword: filters.keywordFilter.length ? filters.keywordFilter : undefined,
+				yearFrom: filters.yearFrom,
+				yearTo: filters.yearTo,
+				sortBy: filters.sortBy !== "relevance" ? filters.sortBy : undefined,
+			},
+		});
+	};
+
 	const initialFilters = {
 		authorFilter: author,
 		journalFilter: normalizeToArray(journal),
@@ -89,6 +109,9 @@ function SearchPage() {
 
 	return (
 		<div className="container mx-auto px-4 py-8">
+			<h1 className="sr-only">
+				{q ? `Search results for "${q}"` : "Search papers"}
+			</h1>
 			<div className="mb-8">
 				<div className="relative rounded-lg border bg-background shadow-sm">
 					<SearchBar defaultValue={q} onSearch={handleSearch} />
@@ -96,6 +119,7 @@ function SearchPage() {
 			</div>
 			<SearchResults
 				initialFilters={initialFilters}
+				onFiltersChange={handleFiltersChange}
 				onPageChange={handlePageChange}
 				onPageSizeChange={handlePageSizeChange}
 				page={page}

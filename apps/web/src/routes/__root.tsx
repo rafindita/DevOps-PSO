@@ -35,6 +35,16 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 				content:
 					"Search and discover academic papers across all scientific disciplines.",
 			},
+			{
+				name: "theme-color",
+				content: "#ffffff",
+				media: "(prefers-color-scheme: light)",
+			},
+			{
+				name: "theme-color",
+				content: "#1e1e2e",
+				media: "(prefers-color-scheme: dark)",
+			},
 		],
 		links: [
 			{
@@ -49,7 +59,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootDocument() {
 	return (
-		<html lang="en">
+		<html lang="en" style={{ colorScheme: "light dark" }} suppressHydrationWarning>
 			<head>
 				<HeadContent />
 				<script
@@ -68,9 +78,15 @@ function RootDocument() {
 				/>
 			</head>
 			<body>
+				<a
+					className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:ring-2 focus:ring-primary"
+					href="#main-content"
+				>
+					Skip to main content
+				</a>
 				<div className="flex min-h-screen flex-col">
 					<Header />
-					<main className="flex-1">
+					<main className="flex-1" id="main-content">
 						<Outlet />
 					</main>
 					<Footer />

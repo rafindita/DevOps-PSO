@@ -1,4 +1,4 @@
-const PAGE_SIZES = [10, 25, 50];
+const PAGE_SIZES = [10, 20, 25, 50];
 
 interface PageSizeSelectorProps {
 	onPageSizeChange: (size: number) => void;
