@@ -13,6 +13,12 @@ const parser = new XMLParser({
 	ignoreAttributes: false,
 	attributeNamePrefix: "@_",
 	isArray: (name) => ["author", "category", "record", "header"].includes(name),
+	// ArXiv IDs (e.g. "2101.00001") look like floats — keep all tag values as strings.
+	parseTagValue: false,
+	// ArXiv OAI-PMH pages return ~1000 records each with many XML entities
+	// (&amp;, &lt;, etc.) in abstracts and titles. Raise the limit beyond the
+	// default of 1000 to avoid false positives on legitimate payloads.
+	processEntities: { maxTotalExpansions: 100_000 },
 });
 
 interface ArxivAuthorObj {
@@ -27,9 +33,11 @@ interface ArxivMetadata {
 	authors?: { author?: ArxivAuthor[] };
 	categories?: string;
 	created?: string;
-	doi?: string;
+	// doi can be an object when it carries XML attributes (e.g. type="doi")
+	doi?: string | { "#text"?: string };
 	id?: string;
-	journal_ref?: string;
+	// ArXiv XML tag is <journal-ref>, not <journal_ref>
+	"journal-ref"?: string;
 	title?: string;
 }
 
@@ -68,10 +76,11 @@ function buildUrl(options: CrawlOptions, resumptionToken?: string): string {
 	}
 
 	if (options.categories?.length) {
-		// OAI-PMH uses sets like "cs" or "cs:AI"
-		const category = options.categories[0];
-		if (category) {
-			params.set("set", category.replace(".", ":"));
+		// OAI-PMH only supports top-level sets (e.g. "cs", "math").
+		// Subcategories like "cs.LG" are not valid sets — strip the suffix.
+		const topLevel = options.categories[0]?.split(".")[0];
+		if (topLevel) {
+			params.set("set", topLevel);
 		}
 	}
 
@@ -135,8 +144,8 @@ function mapRecord(record: OaiRecord): NewPaper | null {
 		abstract,
 		authors,
 		published_at: publishedAt,
-		journal: meta.journal_ref?.trim() ?? null,
-		doi: meta.doi?.trim() ?? null,
+		journal: meta["journal-ref"]?.trim() ?? null,
+		doi: (typeof meta.doi === "object" ? meta.doi["#text"] : meta.doi)?.trim() ?? null,
 		keywords: categories.length > 0 ? categories : null,
 		source_url: `https://arxiv.org/abs/${arxivId}`,
 		source: "arxiv",
@@ -218,12 +227,22 @@ export const arxivAdapter: SourceAdapter = {
 		let url = buildUrl(options);
 		let totalYielded = 0;
 		const maxRecords = options.maxRecords ?? Number.POSITIVE_INFINITY;
+		// Subcategories that need post-fetch filtering (e.g. ["cs.LG", "cs.AI"])
+		const subcategories = (options.categories ?? []).filter((c) => c.includes("."));
 
 		while (true) {
 			const { records, resumptionToken } = await fetchPage(url);
 
 			if (records.length > 0) {
-				const batch = records.slice(0, maxRecords - totalYielded);
+				// Filter to requested subcategories when specified
+				const filtered =
+					subcategories.length > 0
+						? records.filter((p) =>
+								p.keywords?.some((k) => subcategories.includes(k))
+							)
+						: records;
+
+				const batch = filtered.slice(0, maxRecords - totalYielded);
 				// Yield in BATCH_SIZE chunks so the worker can insert incrementally
 				for (let i = 0; i < batch.length; i += BATCH_SIZE) {
 					yield batch.slice(i, i + BATCH_SIZE);

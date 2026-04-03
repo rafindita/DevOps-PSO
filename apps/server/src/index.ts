@@ -2,7 +2,11 @@ import { cors } from "@elysiajs/cors";
 import { env } from "@scholar-seek/env/server";
 import { Elysia } from "elysia";
 import { crawlerModule } from "./modules/crawler";
-import { startCrawlWorker } from "./modules/crawler/queue";
+import {
+	cleanupStuckJobs,
+	startCrawlWorker,
+	stopCrawlWorker,
+} from "./modules/crawler/queue";
 import { papersModule } from "./modules/papers";
 
 const app = new Elysia()
@@ -37,7 +41,17 @@ app.listen(3000, () => {
 	console.log(
 		`🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
 	);
-	startCrawlWorker();
+	cleanupStuckJobs().then(() => startCrawlWorker());
 });
+
+async function shutdown() {
+	console.log("[server] shutting down...");
+	await stopCrawlWorker();
+	app.stop();
+	process.exit(0);
+}
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 export type App = typeof app;

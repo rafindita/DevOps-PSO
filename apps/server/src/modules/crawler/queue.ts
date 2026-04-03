@@ -157,7 +157,38 @@ async function getLastSuccessfulCrawlDate(
 	return date.toISOString().slice(0, 10);
 }
 
+/**
+ * On startup, any crawl_history row still in "running" status means the server
+ * was killed mid-crawl. Mark them failed so they don't appear stuck forever.
+ */
+export async function cleanupStuckJobs(): Promise<void> {
+	const stuck = await db
+		.update(crawlHistory)
+		.set({
+			status: "failed",
+			completed_at: new Date(),
+			errors: ["Server stopped unexpectedly — crawl was interrupted"],
+		})
+		.where(eq(crawlHistory.status, "running"))
+		.returning({ id: crawlHistory.id, source: crawlHistory.source });
+
+	if (stuck.length > 0) {
+		console.warn(
+			`[crawler] marked ${stuck.length} interrupted job(s) as failed:`,
+			stuck.map((r) => r.id).join(", ")
+		);
+	}
+}
+
 let worker: Worker<CrawlJobData> | null = null;
+
+export async function stopCrawlWorker(): Promise<void> {
+	if (!worker) return;
+	console.log("[crawler] shutting down worker — waiting for current batch to finish...");
+	await worker.close();
+	worker = null;
+	console.log("[crawler] worker stopped");
+}
 
 export function startCrawlWorker(): void {
 	if (worker) {
