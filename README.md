@@ -1,114 +1,97 @@
 # scholar-seek
 
-<!--toc:start-->
-- [scholar-seek](#scholar-seek)
-  - [Features](#features)
-  - [Getting Started](#getting-started)
-  - [Database Setup](#database-setup)
-  - [UI Customization](#ui-customization)
-    - [Add more shared components](#add-more-shared-components)
-    - [Add app-specific blocks](#add-app-specific-blocks)
-  - [Git Hooks and Formatting](#git-hooks-and-formatting)
-  - [Project Structure](#project-structure)
-  - [Available Scripts](#available-scripts)
-<!--toc:end-->
+A full-stack academic paper discovery platform. It crawls ArXiv via OAI-PMH, indexes papers into PostgreSQL, and exposes a search interface with filtering by author, journal, keyword, and date range — with LaTeX math rendering in abstracts.
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Elysia, and more.
+## Tech Stack
 
-## Features
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, TanStack Router, TailwindCSS v4, shadcn/ui |
+| Backend | Elysia (Bun), Eden Treaty (type-safe client) |
+| Database | PostgreSQL, Drizzle ORM |
+| Queue | BullMQ + Redis |
+| Monorepo | Turborepo, Bun workspaces |
+| Tooling | Biome, Ultracite, TypeScript |
 
-- **TypeScript** - For type safety and improved developer experience
-- **TanStack Start** - SSR framework with TanStack Router
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **Elysia** - Type-safe, high-performance framework
-- **Bun** - Runtime environment
-- **Drizzle** - TypeScript-first ORM
-- **PostgreSQL** - Database engine
-- **Biome** - Linting and formatting
-- **Turborepo** - Optimized monorepo build system
+## File Structure
 
-## Getting Started
+```
+scholar-seek/
+├── apps/
+│   ├── web/                    # React + TanStack Router SPA
+│   │   └── src/
+│   │       ├── components/     # search UI, paper card, layout
+│   │       ├── lib/            # API client, hooks, search state
+│   │       ├── routes/         # /, /search, /paper/:id
+│   │       └── types/
+│   └── server/                 # Elysia API server (port 3000)
+│       └── src/
+│           ├── modules/
+│           │   ├── papers/     # search, filter, facet endpoints
+│           │   └── crawler/    # BullMQ queue + ArXiv OAI-PMH adapter
+│           └── lib/            # Redis cache helpers
+├── packages/
+│   ├── db/                     # Drizzle schema, migrations, seed
+│   │   └── docker-compose.yml  # Postgres + Redis containers
+│   ├── ui/                     # Shared shadcn/ui primitives
+│   ├── env/                    # Validated env vars (Zod)
+│   └── config/                 # Shared tsconfig
+└── turbo.json
+```
 
-First, install the dependencies:
+## Quick Start
+
+**Prerequisites:** Bun, Docker
+
+1. Install dependencies:
 
 ```bash
 bun install
 ```
 
-## Database Setup
+2. Start Postgres and Redis:
 
-This project uses PostgreSQL with Drizzle ORM.
+```bash
+bun run db:start
+```
 
-1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/server/.env` file with your PostgreSQL connection details.
+3. Copy and fill in environment variables:
 
-3. Apply the schema to your database:
+```bash
+cp apps/server/.env.example apps/server/.env
+cp packages/db/.env.example packages/db/.env
+```
+
+4. Push the schema:
 
 ```bash
 bun run db:push
 ```
 
-Then, run the development server:
+5. Start everything:
 
 ```bash
 bun run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
-The API is running at [http://localhost:3000](http://localhost:3000).
+- Web: http://localhost:3001
+- API: http://localhost:3000
 
-## UI Customization
+## Scripts
 
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
-
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
-
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
-
-```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
-```
-
-Import shared components like this:
-
-```tsx
-import { Button } from "@scholar-seek/ui/components/button";
-```
-
-### Add app-specific blocks
-
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
-
-## Git Hooks and Formatting
-
-- Format and lint fix: `bun run check`
-
-## Project Structure
-
-```
-scholar-seek/
-├── apps/
-│   ├── web/         # Frontend application (React + TanStack Start)
-│   └── server/      # Backend API (Elysia)
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   └── db/          # Database schema & queries
-```
-
-## Available Scripts
-
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run dev:server`: Start only the server
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
-- `bun run db:studio`: Open database studio UI
-- `bun run check`: Run Biome formatting and linting
+| Command | Description |
+|---|---|
+| `bun run dev` | Start all apps in development mode |
+| `bun run dev:web` | Start only the web app |
+| `bun run dev:server` | Start only the API server |
+| `bun run build` | Build all apps |
+| `bun run check-types` | TypeScript type-check across all packages |
+| `bun run check` | Lint and format check (Biome/Ultracite) |
+| `bun run fix` | Auto-fix lint and formatting issues |
+| `bun run db:start` | Start Postgres + Redis via Docker Compose |
+| `bun run db:stop` | Stop Docker containers |
+| `bun run db:push` | Push schema changes to the database |
+| `bun run db:generate` | Generate Drizzle migration files |
+| `bun run db:migrate` | Run pending migrations |
+| `bun run db:seed` | Seed the database with sample data |
+| `bun run db:studio` | Open Drizzle Studio |
