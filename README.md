@@ -59,6 +59,7 @@ bun run db:start
 
 ```bash
 cp apps/server/.env.example apps/server/.env
+cp apps/web/.env.example apps/web/.env
 cp packages/db/.env.example packages/db/.env
 ```
 
