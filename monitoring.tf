@@ -72,3 +72,4 @@ resource "azurerm_monitor_metric_alert" "http_5xx_critical_alert" {
     action_group_id = azurerm_monitor_action_group.sheets_webhook_target.id
   }
 }
+
