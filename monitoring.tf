@@ -4,7 +4,7 @@
 resource "azurerm_log_analytics_workspace" "monitoring_law" {
   name                = "law-scholarseek-prod"
   location            = "Southeast Asia"
-  resource_group_name = "ScholarSeek" # Pastikan nama Resource Group sesuai di Azure kalian
+  resource_group_name = "ScholarSeek"
   sku                 = "PerGB2018"
   retention_in_days   = 30
 }
@@ -15,11 +15,10 @@ resource "azurerm_log_analytics_workspace" "monitoring_law" {
 resource "azurerm_monitor_diagnostic_setting" "elysia_bun_sensor" {
   name                       = "ds-elysia-bun-logs"
   
-  # DISESUAIKAN: Menembak langsung ke ID resource Web App kelompokmu secara dinamis
-  target_resource_id         = azurerm_linux_web_app.scholar_seek.id 
+  # MENEMBAK LANGSUNG KE ID WEB APP MANUAL KAMU
+  target_resource_id         = "/subscriptions/ca9da7e3-35f9-458e-8fa4-1bfe1add2841/resourceGroups/ScholarSeek/providers/Microsoft.Web/sites/scholar-seek-app"
   log_analytics_workspace_id = azurerm_log_analytics_workspace.monitoring_law.id
 
-  # Menangkap error internal, console.log(), dan jalannya query Drizzle ORM dari container Bun
   enabled_log {
     category = "AppServiceConsoleLogs"
   }
@@ -39,7 +38,7 @@ resource "azurerm_monitor_action_group" "sheets_webhook_target" {
 
   webhook_receiver {
     name                    = "google-sheets-receiver"
-    # DISESUAIKAN: Taruh URL Webhook Google Apps Script kelompokmu di sini jika sudah ada
+    # Silakan ganti dengan URL Webhook kelompokmu jika sudah ada
     service_uri             = "https://your-google-sheets-webhook-url.com" 
     use_common_alert_schema = true
   }
@@ -52,8 +51,8 @@ resource "azurerm_monitor_metric_alert" "http_5xx_critical_alert" {
   name                = "alert-critical-elysia-bun"
   resource_group_name = "ScholarSeek"
   
-  # DISESUAIKAN: Menggunakan ID resource Web App yang sama
-  scopes              = [azurerm_linux_web_app.scholar_seek.id]
+  # MENGGUNAKAN ID WEB APP YANG SAMA
+  scopes              = ["/subscriptions/ca9da7e3-35f9-458e-8fa4-1bfe1add2841/resourceGroups/ScholarSeek/providers/Microsoft.Web/sites/scholar-seek-app"]
   
   description         = "Alarm otomatis aktif jika API Elysia/Bun melempar error internal server HTTP 5xx."
   severity            = 1
@@ -72,4 +71,3 @@ resource "azurerm_monitor_metric_alert" "http_5xx_critical_alert" {
     action_group_id = azurerm_monitor_action_group.sheets_webhook_target.id
   }
 }
-
