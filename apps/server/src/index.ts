@@ -36,7 +36,8 @@ const app = new Elysia()
 		return Bun.file(frontendIndexPath);
 	});
 
-const server = app.listen(env.PORT);
+const PORT = Number(process.env.PORT) || 3000;
+const server = app.listen(PORT);
 
 console.log(`🚀 Server running at http://${server.hostname}:${server.port}`);
 
