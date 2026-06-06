@@ -24,7 +24,6 @@ const app = new Elysia()
 			set.status = 400;
 			return { error: error.message };
 		}
-
 		console.error(error);
 		set.status = 500;
 		return { error: "Internal Server Error" };
@@ -39,9 +38,7 @@ const app = new Elysia()
 
 const server = app.listen(env.PORT);
 
-console.log(
-	`🚀 Server running at http://${server.hostname}:${server.port}`
-);
+console.log(`🚀 Server running at http://${server.hostname}:${server.port}`);
 
 startCrawlWorker();
 
