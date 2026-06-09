@@ -24,4 +24,4 @@ COPY --from=builder /app/apps/server/package.json ./apps/server/package.json
 COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
 COPY --from=builder /app/package.json ./package.json
 EXPOSE 3000
-CMD ["bun", "run", "apps/server/dist/index.mjs"]
+CMD ["bun", "run", "apps/web/dist/server/server.js"]
