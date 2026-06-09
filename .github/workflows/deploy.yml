@@ -3,7 +3,7 @@ name: Deploy to Azure VM
 on:
   push:
     branches:
-      - main # Memicu deployment otomatis setiap ada perubahan di branch main
+      - main
 
 jobs:
   deploy:
@@ -18,37 +18,57 @@ jobs:
           username: ${{ secrets.AZURE_VM_USERNAME }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           script: |
-            # 1. Inisialisasi Environment (Bun Runtime)
+            echo "=== FASE 1: AUDIT & PROVISI RUNTIME ==="
+            # Memastikan Bun terinstal. Jika tidak, sistem akan menginstalnya.
+            if [ ! -d "$HOME/.bun" ]; then
+              echo "Bun runtime tidak ditemukan. Menginisiasi instalasi..."
+              curl -fsSL https://bun.sh/install | bash
+            fi
+            
+            # Memuat Bun ke dalam sistem environment
             export BUN_INSTALL="$HOME/.bun"
             export PATH="$BUN_INSTALL/bin:$PATH"
             
-            # 2. Navigasi ke direktori kerja (Diasumsikan clone manual telah dilakukan)
-            cd /home/${{ secrets.AZURE_VM_USERNAME }}/DevOps-PSO
+            echo "=== FASE 2: SINKRONISASI KODE SUMBER ==="
+            # Mendefinisikan target direktori
+            PROJECT_DIR="/home/${{ secrets.AZURE_VM_USERNAME }}/DevOps-PSO"
             
-            # 3. Sinkronisasi Version Control
+            # Memastikan repositori ada. Jika tidak, lakukan clone otomatis dari akun rafindita.
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "Direktori proyek tidak ditemukan. Melakukan kloning repositori..."
+              git clone https://github.com/rafindita/DevOps-PSO.git $PROJECT_DIR
+            fi
+            
+            # Masuk ke dalam direktori proyek
+            cd $PROJECT_DIR
+            
+            # Mengamankan perizinan direktori untuk mencegah konflik git
+            git config --global --add safe.directory $PROJECT_DIR
+            
             echo "Menarik pembaruan kode terbaru..."
             git pull origin main
             
-            # 4. Resolusi Dependensi
-            echo "Menginstal paket dependensi..."
+            echo "=== FASE 3: RESOLUSI DEPENDENSI & BUILD ==="
+            echo "Menginstal paket dependensi Turborepo & Bun..."
             bun install
             
-            # 5. Provisi Infrastruktur Database
             echo "Memastikan PostgreSQL dan Redis beroperasi..."
-            bun run db:start
+            # Menambahkan sudo untuk memastikan Docker memiliki izin penuh
+            sudo bun run db:start || true
             sleep 10
             
             echo "Menerapkan migrasi database..."
             bun run db:push
             
-            # 6. Eksekusi Build
             echo "Mem-build aplikasi Web dan API..."
             bun run build
             
-            # 7. Restart Layanan
-            echo "Menjalankan layanan di background..."
+            echo "=== FASE 4: ORKESTRASI LAYANAN ==="
+            echo "Menghentikan instans layanan lama..."
             pkill -f "bun run dev" || true
+            
+            echo "Menjalankan versi terbaru di background..."
             nohup bun run dev:server > api_server.log 2>&1 &
             nohup bun run dev:web > web_client.log 2>&1 &
             
-            echo "Deployment Tereksekusi dengan Sukses."
+            echo "Deployment Pipeline Tereksekusi dengan Sukses."
