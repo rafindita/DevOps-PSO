@@ -11,43 +11,12 @@ import {
 } from "./modules/crawler/queue";
 import { papersModule } from "./modules/papers";
 
-// Fungsi untuk mencari file secara rekursif (bongkar isi folder)
-function findFile(dir: string, filename: string): string | null {
-	if (!fs.existsSync(dir)) return null;
-	const files = fs.readdirSync(dir);
-	for (const file of files) {
-		const fullPath = path.join(dir, file);
-		if (fs.lstatSync(fullPath).isDirectory()) {
-			const found = findFile(fullPath, filename);
-			if (found) return found;
-		} else if (file === filename) {
-			return fullPath;
-		}
-	}
-	return null;
-}
-
-const distPath = path.resolve(process.cwd(), "apps/web/dist");
-console.log("🔍 Mencari index.html di dalam:", distPath);
-
-const realIndexPath = findFile(distPath, "index.html");
-
-if (realIndexPath) {
-	console.log("✅ DITEMUKAN! File index.html ada di:", realIndexPath);
-	// Gunakan realIndexPath ini untuk menyajikan file statis
-} else {
-	console.error("❌ TIDAK DITEMUKAN! Mari kita bongkar isi folder:");
-	// Cetak struktur folder supaya kita tahu apa yang sebenarnya di-copy
-	const execSync = require("node:child_process").execSync;
-	try {
-		console.log(execSync("find apps/web/dist -maxdepth 3").toString());
-	} catch (error) {
-		console.error("Gagal menjalankan perintah find");
-	}
-}
-
-const frontendAssetsPath = distPath;
-const frontendIndexPath = realIndexPath ?? path.resolve(distPath, "index.html");
+const frontendAssetsPath = path.resolve(
+	process.env.NODE_ENV === "production"
+		? path.join(process.cwd(), "apps/web/dist/client")
+		: path.join(import.meta.dir, "../../apps/web/dist/client")
+);
+const frontendIndexPath = path.resolve(frontendAssetsPath, "index.html");
 
 const app = new Elysia()
 	.onError(({ code, error, set }) => {
@@ -59,7 +28,13 @@ const app = new Elysia()
 		set.status = 500;
 		return { error: "Internal Server Error" };
 	})
-	.use(cors())
+	.use(
+		cors({
+			origin: true, // Allow all origins in dev, or specify your domain
+			methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+			allowedHeaders: ["Content-Type", "Authorization"],
+		})
+	)
 	.use(staticPlugin({ assets: frontendAssetsPath, prefix: "/" }))
 	.use(crawlerModule)
 	.use(papersModule)
@@ -68,15 +43,29 @@ const app = new Elysia()
 	});
 
 const PORT = Number(process.env.PORT) || 3000;
-app.listen({ port: PORT, hostname: "0.0.0.0" }, (server) => {
-	console.log(`Server running at http://${server?.hostname}:${server?.port}`);
-});
-startCrawlWorker();
+const server = app.listen(PORT);
+console.log(`Server running at http://${server.hostname}:${server.port}`);
+
+// Prevent crash if Redis/Worker fails
+if (process.env.ENABLE_CRAWLER === "true") {
+	try {
+		startCrawlWorker();
+		console.log("Crawler worker started");
+	} catch (e) {
+		console.error("Failed to start crawler worker:", e);
+	}
+}
 
 process.on("SIGINT", async () => {
 	console.log("Shutting down gracefully...");
-	await stopCrawlWorker();
-	await cleanupStuckJobs();
-	await app.stop();
+	try {
+		if (process.env.ENABLE_CRAWLER === "true") {
+			await stopCrawlWorker();
+			await cleanupStuckJobs();
+		}
+		await app.stop();
+	} catch (e) {
+		console.error("Error during shutdown:", e);
+	}
 	process.exit(0);
 });

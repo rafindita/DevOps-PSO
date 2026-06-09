@@ -1,22 +1,20 @@
 # ====================================================================
-# 1. LOG ANALYTICS WORKSPACE (Wadah Penyimpanan Semua Log & Metrik)
+# 1. LOG ANALYTICS WORKSPACE
 # ====================================================================
 resource "azurerm_log_analytics_workspace" "monitoring_law" {
   name                = "law-scholarseek-prod"
-  location            = "Southeast Asia"
-  resource_group_name = "ScholarSeek"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
 }
 
 # ====================================================================
-# 2. SENSOR DIAGNOSTIC SETTINGS (Menyaring Log Console Bun & Elysia)
+# 2. SENSOR DIAGNOSTIC SETTINGS (Dinamis mengambil ID dari Web App)
 # ====================================================================
 resource "azurerm_monitor_diagnostic_setting" "elysia_bun_sensor" {
   name                       = "ds-elysia-bun-logs"
-  
-  # MENEMBAK LANGSUNG KE ID WEB APP MANUAL KAMU
-  target_resource_id         = "/subscriptions/ca9da7e3-35f9-458e-8fa4-1bfe1add2841/resourceGroups/ScholarSeek/providers/Microsoft.Web/sites/scholar-seek-app"
+  target_resource_id         = azurerm_linux_web_app.main.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.monitoring_law.id
 
   enabled_log {
@@ -29,32 +27,30 @@ resource "azurerm_monitor_diagnostic_setting" "elysia_bun_sensor" {
 }
 
 # ====================================================================
-# 3. ACTION GROUP WEBHOOK (Jembatan Otomatis ke Google Sheets)
+# 3. ACTION GROUP (Notifikasi via Email)
 # ====================================================================
-resource "azurerm_monitor_action_group" "sheets_webhook_target" {
+resource "azurerm_monitor_action_group" "main_alert_group" {
   name                = "ag-scholarseek-alert"
-  resource_group_name = "ScholarSeek"
-  short_name          = "AlertSheets"
+  resource_group_name = azurerm_resource_group.main.name
+  short_name          = "Alerts"
 
-  webhook_receiver {
-    name                    = "google-sheets-receiver"
-    # Silakan ganti dengan URL Webhook kelompokmu jika sudah ada
-    service_uri             = "https://your-google-sheets-webhook-url.com" 
+  email_receiver {
+    name                    = "send-to-admin"
+    email_address           = var.alert_email_address
     use_common_alert_schema = true
   }
 }
 
 # ====================================================================
-# 4. METRIC ALERT RULE (Alarm Otomatis jika Server Crash / HTTP 5xx)
+# 4. METRIC ALERT RULE
 # ====================================================================
 resource "azurerm_monitor_metric_alert" "http_5xx_critical_alert" {
   name                = "alert-critical-elysia-bun"
-  resource_group_name = "ScholarSeek"
+  resource_group_name = azurerm_resource_group.main.name
   
-  # MENGGUNAKAN ID WEB APP YANG SAMA
-  scopes              = ["/subscriptions/ca9da7e3-35f9-458e-8fa4-1bfe1add2841/resourceGroups/ScholarSeek/providers/Microsoft.Web/sites/scholar-seek-app"]
+  scopes              = [azurerm_linux_web_app.main.id]
   
-  description         = "Alarm otomatis aktif jika API Elysia/Bun melempar error internal server HTTP 5xx."
+  description         = "Alarm otomatis aktif jika API Elysia melempar error HTTP 5xx."
   severity            = 1
   frequency           = "PT1M"
   window_size         = "PT5M"
@@ -70,4 +66,6 @@ resource "azurerm_monitor_metric_alert" "http_5xx_critical_alert" {
   action {
     action_group_id = azurerm_monitor_action_group.sheets_webhook_target.id
   }
+}
+ }
 }

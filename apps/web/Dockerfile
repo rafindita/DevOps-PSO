@@ -19,13 +19,15 @@ RUN cd apps/web && bun run build
 # Runtime stage
 FROM oven/bun:1-alpine
 
-WORKDIR /app
+WORKDIR /app/apps/web
 
 # Copy built artifacts from builder
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/apps/web/package.json ./package.json
 COPY --from=builder /app/apps/web/dist ./dist
 
 # Expose port
 EXPOSE 3001
 
-# Serve the built app using bun's built-in server
-CMD ["bun", "run", "--", "bunx", "serve", "-s", "dist", "-l", "3001"]
+# Run the TanStack Start server handler through Bun's HTTP server
+CMD ["bun", "-e", "import server from './dist/server/server.js'; Bun.serve({ port: 3001, fetch: server.fetch });"]

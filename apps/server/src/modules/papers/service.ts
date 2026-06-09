@@ -80,7 +80,7 @@ function buildFacets(papersList: FacetRow[]): FacetsType {
 			authorCounts.set(author, (authorCounts.get(author) ?? 0) + 1);
 		}
 
-		if (paper.published_at) {
+		if (paper.published_at instanceof Date) {
 			const year = paper.published_at.getFullYear().toString();
 			yearCounts.set(year, (yearCounts.get(year) ?? 0) + 1);
 		}
