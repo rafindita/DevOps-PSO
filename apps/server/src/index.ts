@@ -13,11 +13,11 @@ import { papersModule } from "./modules/papers";
 
 const frontendAssetsPath = path.resolve(
 	process.cwd(),
-	"apps/web/dist/client"
+	"apps/web/dist"
 );
 const frontendIndexPath = path.resolve(
 	process.cwd(),
-	"apps/web/dist/client/index.html"
+	"apps/web/dist/index.html"
 );
 
 const app = new Elysia()
@@ -39,10 +39,9 @@ const app = new Elysia()
 	});
 
 const PORT = Number(process.env.PORT) || 3000;
-const server = app.listen({
-    port: PORT,
-    hostname: "0.0.0.0"
-});console.log(`Server running at http://${server.hostname}:${server.port}`);
+app.listen({ port: PORT, hostname: "0.0.0.0" }, (server) => {
+	console.log(`Server running at http://${server?.hostname}:${server?.port}`);
+});
 startCrawlWorker();
 
 process.on("SIGINT", async () => {
