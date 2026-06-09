@@ -30,6 +30,12 @@ jobs:
             export BUN_INSTALL="$HOME/.bun"
             export PATH="$BUN_INSTALL/bin:$PATH"
             
+            # Memastikan PM2 terinstal untuk stabilitas layanan background
+            if ! command -v pm2 &> /dev/null; then
+                echo "Menginstal PM2 Process Manager..."
+                bun install -g pm2
+            fi
+            
             echo "=== FASE 2: SINKRONISASI KODE SUMBER ==="
             PROJECT_DIR="/home/${{ secrets.AZURE_VM_USERNAME }}/DevOps-PSO"
             
@@ -42,15 +48,12 @@ jobs:
             git pull origin main
             
             echo "=== FASE 3: KONFIGURASI ENVIRONMENT & DATABASE ==="
-            # Menyuntikkan kredensial database default agar Drizzle ORM dapat terhubung
-            # Asumsi: Docker compose menjalankan Postgres di port 5432 dengan auth default
             echo 'DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/postgres"' > packages/db/.env
             echo 'DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/postgres"' > apps/server/.env
             
             bun install
             
             echo "Memastikan Docker Database beroperasi..."
-            # Mempertahankan Environment PATH agar sudo mengenali perintah 'bun'
             sudo -E env PATH=$PATH bun run db:start || true
             sleep 15
             
@@ -60,15 +63,17 @@ jobs:
             echo "Mem-build aplikasi Web dan API..."
             bun run build
             
-            echo "=== FASE 4: ORKESTRASI LAYANAN (ZERO DOWNTIME) ==="
-            echo "Menghentikan instans layanan lama..."
-            pkill -f "dev:server" || true
-            pkill -f "dev:web" || true
+            echo "=== FASE 4: ORKESTRASI LAYANAN (PM2 INTEGRATION) ==="
+            # Menghentikan dan menghapus proses lama secara aman tanpa membunuh sesi SSH
+            pm2 stop all || true
+            pm2 delete all || true
             
-            echo "Menjalankan versi terbaru di background..."
-            # Pelepasan aliran I/O absolut untuk mencegah anomali Signal 143
-            nohup bun run dev:server > api_server.log 2>&1 < /dev/null &
-            nohup bun run dev:web > web_client.log 2>&1 < /dev/null &
+            echo "Menjalankan versi layanan terbaru..."
+            pm2 start "bun run dev:server" --name "scholar-api"
+            pm2 start "bun run dev:web" --name "scholar-web"
             
-            echo "Deployment Tereksekusi dengan Sukses. Mengamankan Terminasi Sesi..."
+            # Menyimpan status agar otomatis menyala saat server direstart
+            pm2 save
+            
+            echo "Deployment Pipeline Tereksekusi dengan Sukses."
             exit 0
