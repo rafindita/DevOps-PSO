@@ -11,14 +11,11 @@ import {
 } from "./modules/crawler/queue";
 import { papersModule } from "./modules/papers";
 
-const frontendAssetsPath = path.resolve(
-	process.cwd(),
-	"apps/web/dist"
-);
-const frontendIndexPath = path.resolve(
-	process.cwd(),
-	"apps/web/dist/index.html"
-);
+// Menggunakan __dirname agar path selalu relatif terhadap file index.ts
+// Kita naik 2 tingkat dari __dirname (src -> server -> apps) 
+// kemudian turun ke web/dist
+const frontendAssetsPath = path.join(__dirname, "..", "..", "web", "dist");
+const frontendIndexPath = path.join(__dirname, "..", "..", "web", "dist", "index.html");
 
 const app = new Elysia()
 	.onError(({ code, error, set }) => {
@@ -31,6 +28,7 @@ const app = new Elysia()
 		return { error: "Internal Server Error" };
 	})
 	.use(cors())
+	// Menyajikan file statis dari folder web/dist yang telah diperbaiki path-nya
 	.use(staticPlugin({ assets: frontendAssetsPath, prefix: "/" }))
 	.use(crawlerModule)
 	.use(papersModule)
@@ -42,6 +40,7 @@ const PORT = Number(process.env.PORT) || 3000;
 app.listen({ port: PORT, hostname: "0.0.0.0" }, (server) => {
 	console.log(`Server running at http://${server?.hostname}:${server?.port}`);
 });
+
 startCrawlWorker();
 
 process.on("SIGINT", async () => {
