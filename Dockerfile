@@ -23,5 +23,6 @@ COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=builder /app/apps/server/package.json ./apps/server/package.json
 COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
 COPY --from=builder /app/package.json ./package.json
+COPY start.sh ./start.sh
 EXPOSE 3000
-CMD ["bun", "run", "apps/web/dist/server/server.js"]
+CMD ["sh", "start.sh"]
