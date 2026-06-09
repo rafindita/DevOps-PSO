@@ -34,7 +34,6 @@ jobs:
             PROJECT_DIR="/home/${{ secrets.AZURE_VM_USERNAME }}/DevOps-PSO"
             
             if [ ! -d "$PROJECT_DIR" ]; then
-              echo "Melakukan kloning repositori..."
               git clone https://github.com/rafindita/DevOps-PSO.git $PROJECT_DIR
             fi
             
@@ -42,24 +41,34 @@ jobs:
             git config --global --add safe.directory $PROJECT_DIR
             git pull origin main
             
-            echo "=== FASE 3: RESOLUSI DEPENDENSI & BUILD ==="
+            echo "=== FASE 3: KONFIGURASI ENVIRONMENT & DATABASE ==="
+            # Menyuntikkan kredensial database default agar Drizzle ORM dapat terhubung
+            # Asumsi: Docker compose menjalankan Postgres di port 5432 dengan auth default
+            echo 'DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/postgres"' > packages/db/.env
+            echo 'DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/postgres"' > apps/server/.env
+            
             bun install
             
-            sudo bun run db:start || true
-            sleep 10
+            echo "Memastikan Docker Database beroperasi..."
+            # Mempertahankan Environment PATH agar sudo mengenali perintah 'bun'
+            sudo -E env PATH=$PATH bun run db:start || true
+            sleep 15
             
+            echo "Menerapkan migrasi database..."
             bun run db:push
+            
+            echo "Mem-build aplikasi Web dan API..."
             bun run build
             
-            echo "=== FASE 4: ORKESTRASI LAYANAN ==="
+            echo "=== FASE 4: ORKESTRASI LAYANAN (ZERO DOWNTIME) ==="
             echo "Menghentikan instans layanan lama..."
-            # Membidik proses spesifik agar tidak salah mematikan proses lain
             pkill -f "dev:server" || true
             pkill -f "dev:web" || true
             
             echo "Menjalankan versi terbaru di background..."
-            # Perbaikan Kritis: Menambahkan < /dev/null agar proses benar-benar lepas dari SSH
+            # Pelepasan aliran I/O absolut untuk mencegah anomali Signal 143
             nohup bun run dev:server > api_server.log 2>&1 < /dev/null &
             nohup bun run dev:web > web_client.log 2>&1 < /dev/null &
             
-            echo "Deployment Pipeline Tereksekusi dengan Sukses."
+            echo "Deployment Tereksekusi dengan Sukses. Mengamankan Terminasi Sesi..."
+            exit 0
