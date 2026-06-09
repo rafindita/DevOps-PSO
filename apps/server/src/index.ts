@@ -1,3 +1,4 @@
+// server entry point
 import path from "node:path";
 import fs from "node:fs";
 import { staticPlugin } from "@elysia/static";
