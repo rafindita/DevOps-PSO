@@ -1,4 +1,4 @@
-Set-Content packages\env\src\server.ts -Value 'import "dotenv/config";
+import "dotenv/config";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 export const env = createEnv({
@@ -13,4 +13,4 @@ export const env = createEnv({
         },
         runtimeEnv: process.env,
         emptyStringAsUndefined: true,
-});'
+});
