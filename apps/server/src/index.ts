@@ -1,4 +1,5 @@
 import path from "node:path";
+import fs from "node:fs";
 import { staticPlugin } from "@elysia/static";
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
@@ -10,14 +11,24 @@ import {
 } from "./modules/crawler/queue";
 import { papersModule } from "./modules/papers";
 
-const frontendAssetsPath = path.resolve(
-	process.cwd(),
-	"apps/web/dist"
-);
-const frontendIndexPath = path.resolve(
-	process.cwd(),
-	"apps/web/dist/index.html"
-);
+let frontendAssetsPath = path.resolve(process.cwd(), "apps/web/dist");
+let frontendIndexPath = path.resolve(process.cwd(), "apps/web/dist/index.html");
+const clientIndexPath = path.resolve(process.cwd(), "apps/web/dist/client/index.html");
+
+if (fs.existsSync(clientIndexPath)) {
+    frontendAssetsPath = path.resolve(process.cwd(), "apps/web/dist/client");
+    frontendIndexPath = clientIndexPath;
+    console.log("✅ Web UI otomatis terdeteksi di /dist/client");
+} else if (fs.existsSync(frontendIndexPath)) {
+    console.log("✅ Web UI otomatis terdeteksi di /dist");
+} else {
+    console.error("❌ index.html gagal ditemukan! Mencetak isi folder dist:");
+    try {
+        console.error(fs.readdirSync(path.resolve(process.cwd(), "apps/web/dist")));
+    } catch (err) {
+        console.error("Folder dist tidak dapat dibaca atau tidak ada!");
+    }
+}
 
 const app = new Elysia()
 	.onError(({ code, error, set }) => {
