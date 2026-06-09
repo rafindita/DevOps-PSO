@@ -1,3 +1,4 @@
+// server entry point
 import path from "node:path";
 import { staticPlugin } from "@elysia/static";
 import { cors } from "@elysiajs/cors";
