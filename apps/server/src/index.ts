@@ -37,31 +37,22 @@ app.listen(PORT, () => {
 });
 
 // 🔥 DETEKSI LOKASI SERVER.JS SECARA OTOMATIS
+// Ganti bagian ini di index.ts
 if (process.env.NODE_ENV === "production") {
-    const possiblePaths = [
-        "apps/web/dist/server/server.js",        // Lokasi 1
-        "apps/web/.output/server/index.mjs",    // Lokasi 2 (TanStack Start biasa)
-        "apps/web/.output/server/server.js",    // Lokasi 3
-        "dist/server/server.js"                 // Lokasi 4
-    ];
+    // TanStack Start/Vinxi biasanya meletakkan server di sini:
+    const webServerPath = "apps/web/.output/server/index.mjs";
 
-    const webServerPath = possiblePaths.find(p => fs.existsSync(p));
-
-    if (!webServerPath) {
-        console.error("FATAL: File server.js/index.mjs tidak ditemukan!");
-        // Cetak isi folder untuk debug
-        console.error("Isi folder apps/web:", fs.existsSync("apps/web") ? fs.readdirSync("apps/web") : "Folder apps/web tidak ada");
-    } else {
-        console.log("Menemukan Frontend TanStack di:", webServerPath);
+    if (fs.existsSync(webServerPath)) {
+        console.log("Menemukan Frontend di:", webServerPath);
         Bun.spawn(["bun", "run", webServerPath], {
-            env: {
-                ...process.env,
-                PORT: "3001",
-                NODE_PATH: "/app/node_modules"
-            },
+            env: { ...process.env, PORT: "3001" },
             stdout: "inherit",
             stderr: "inherit"
         });
+    } else {
+        // Jika tidak ada di .output, maka file server.js mungkin tidak ter-build
+        console.error("GAGAL: File server tidak ditemukan di .output/server/index.mjs");
+        process.exit(1);
     }
 }
 
