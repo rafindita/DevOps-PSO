@@ -1,4 +1,18 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
+
+// Mock Bun.file for the frontend catch-all
+mock.module("bun", () => ({
+	...require("bun"),
+	file: (path: string) => {
+		return {
+			size: 100,
+			type: "text/html",
+			stream: () => new ReadableStream(),
+			arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+		};
+	},
+}));
+
 import { app } from "./index";
 
 describe("Server basic tests", () => {
