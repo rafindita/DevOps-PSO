@@ -37,7 +37,9 @@ const MOCK_ARXIV_XML = `
 describe("ArXiv Adapter", () => {
 	test("correctly parses ArXiv OAI-PMH XML", async () => {
 		// Mock the global fetch
-		global.fetch = mock(() => Promise.resolve(new Response(MOCK_ARXIV_XML))) as any;
+		global.fetch = mock(() =>
+			Promise.resolve(new Response(MOCK_ARXIV_XML))
+		) as any;
 
 		const options = { maxRecords: 1 };
 		const generator = arxivAdapter.crawl(options);
@@ -66,7 +68,9 @@ describe("ArXiv Adapter", () => {
 	});
 
 	test("filters by subcategory correctly", async () => {
-		global.fetch = mock(() => Promise.resolve(new Response(MOCK_ARXIV_XML))) as any;
+		global.fetch = mock(() =>
+			Promise.resolve(new Response(MOCK_ARXIV_XML))
+		) as any;
 
 		// Request a different subcategory than what's in MOCK_ARXIV_XML
 		const options = { categories: ["math.GT"], maxRecords: 1 };
