@@ -22,7 +22,7 @@ const adapters: Record<string, SourceAdapter> = {
 	arxiv: arxivAdapter,
 };
 
-let queue: Queue<CrawlJobData> | null = null;
+let queue: Queue | null = null;
 
 export function getCrawlQueue(): Queue<CrawlJobData> {
 	if (!queue) {
@@ -30,7 +30,7 @@ export function getCrawlQueue(): Queue<CrawlJobData> {
 		if (!redis) {
 			throw new Error("Redis connection is required for the crawl queue");
 		}
-		queue = new Queue<CrawlJobData>(QUEUE_NAME, {
+		const newQueue = new Queue(QUEUE_NAME, {
 			connection: redis,
 			defaultJobOptions: {
 				attempts: 2,
@@ -39,8 +39,9 @@ export function getCrawlQueue(): Queue<CrawlJobData> {
 				removeOnFail: 100,
 			},
 		});
+		queue = newQueue as unknown as Queue;
 	}
-	return queue!;
+	return queue as unknown as Queue<CrawlJobData>;
 }
 
 async function processJob(
@@ -184,7 +185,7 @@ export async function cleanupStuckJobs(): Promise<void> {
 	}
 }
 
-let worker: Worker<CrawlJobData> | null = null;
+let worker: Worker | null = null;
 
 export async function stopCrawlWorker(): Promise<void> {
 	if (!worker) {
@@ -211,7 +212,7 @@ export function startCrawlWorker(): void {
 		return;
 	}
 
-	worker = new Worker<CrawlJobData>(
+	const newWorker = new Worker<CrawlJobData>(
 		QUEUE_NAME,
 		async (job) => {
 			let { source, options, historyId } = job.data;
@@ -232,6 +233,8 @@ export function startCrawlWorker(): void {
 			concurrency: 1,
 		}
 	);
+
+	worker = newWorker as unknown as Worker;
 
 	worker.on("failed", (job, err) => {
 		console.error(`[crawler] job ${job?.id} failed:`, err.message);
