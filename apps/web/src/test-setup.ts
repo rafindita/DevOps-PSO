@@ -1,5 +1,3 @@
-import { GlobalRegistrator } from "@happy-dom/global-registrator";
-
 // If using happy-dom (recommended for speed)
 // GlobalRegistrator.register();
 
@@ -7,10 +5,11 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { JSDOM } from "jsdom";
 
 const jsdom = new JSDOM("<!doctype html><html><body></body></html>", {
-  url: "http://localhost",
+	url: "http://localhost",
 });
 
-globalThis.window = jsdom.window as any;
+// biome-ignore lint/suspicious/noExplicitAny: JSDOM window needs to be cast to any for globalThis
+(globalThis as any).window = jsdom.window;
 globalThis.document = jsdom.window.document;
 globalThis.navigator = jsdom.window.navigator;
 globalThis.HTMLElement = jsdom.window.HTMLElement;

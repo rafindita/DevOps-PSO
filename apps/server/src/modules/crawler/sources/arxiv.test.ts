@@ -1,4 +1,4 @@
-import { expect, test, describe, mock, spyOn } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 import { arxivAdapter } from "./arxiv";
 
 const MOCK_ARXIV_XML = `
@@ -35,82 +35,84 @@ const MOCK_ARXIV_XML = `
 `;
 
 describe("ArXiv Adapter", () => {
-  test("correctly parses ArXiv OAI-PMH XML", async () => {
-    // Mock the global fetch
-    global.fetch = mock(() => Promise.resolve(new Response(MOCK_ARXIV_XML)));
+	test("correctly parses ArXiv OAI-PMH XML", async () => {
+		// Mock the global fetch
+		global.fetch = mock(() => Promise.resolve(new Response(MOCK_ARXIV_XML)));
 
-    const options = { maxRecords: 1 };
-    const generator = arxivAdapter.crawl(options);
-    
-    const { value: batch } = await generator.next();
-    
-    expect(batch).toBeDefined();
-    expect(batch!.length).toBe(1);
-    
-    const paper = batch![0];
-    expect(paper.source_id).toBe("2101.00001");
-    expect(paper.title).toBe("Test Paper Title");
-    expect(paper.authors).toEqual(["John Doe", "Jane Smith"]);
-    expect(paper.keywords).toEqual(["cs.LG", "cs.AI"]);
-    expect(paper.doi).toBe("10.1234/test.doi");
-    expect(paper.source_url).toBe("https://arxiv.org/abs/2101.00001");
-  });
+		const options = { maxRecords: 1 };
+		const generator = arxivAdapter.crawl(options);
 
-  test("handles empty records", async () => {
-    const EMPTY_XML = `<OAI-PMH><ListRecords></ListRecords></OAI-PMH>`;
-    global.fetch = mock(() => Promise.resolve(new Response(EMPTY_XML)));
+		const { value: batch } = await generator.next();
 
-    const generator = arxivAdapter.crawl({ maxRecords: 1 });
-    const { done } = await generator.next();
-    expect(done).toBe(true);
-  });
+		expect(batch).toBeDefined();
+		expect(batch?.length).toBe(1);
 
-  test("filters by subcategory correctly", async () => {
-    global.fetch = mock(() => Promise.resolve(new Response(MOCK_ARXIV_XML)));
+		const paper = batch?.[0];
+		expect(paper.source_id).toBe("2101.00001");
+		expect(paper.title).toBe("Test Paper Title");
+		expect(paper.authors).toEqual(["John Doe", "Jane Smith"]);
+		expect(paper.keywords).toEqual(["cs.LG", "cs.AI"]);
+		expect(paper.doi).toBe("10.1234/test.doi");
+		expect(paper.source_url).toBe("https://arxiv.org/abs/2101.00001");
+	});
 
-    // Request a different subcategory than what's in MOCK_ARXIV_XML
-    const options = { categories: ["math.GT"], maxRecords: 1 };
-    const generator = arxivAdapter.crawl(options);
-    
-    const { done } = await generator.next();
-    // Should be done because no records matched the subcategory
-    expect(done).toBe(true);
-  });
+	test("handles empty records", async () => {
+		const EMPTY_XML = "<OAI-PMH><ListRecords></ListRecords></OAI-PMH>";
+		global.fetch = mock(() => Promise.resolve(new Response(EMPTY_XML)));
 
-  test("handles ArXiv 503 Retry-After response", async () => {
-    let callCount = 0;
-    global.fetch = mock(() => {
-      callCount++;
-      if (callCount === 1) {
-        return Promise.resolve(new Response("Service Unavailable", { 
-          status: 503, 
-          headers: { "Retry-After": "0" } 
-        }));
-      }
-      return Promise.resolve(new Response(MOCK_ARXIV_XML));
-    });
+		const generator = arxivAdapter.crawl({ maxRecords: 1 });
+		const { done } = await generator.next();
+		expect(done).toBe(true);
+	});
 
-    const generator = arxivAdapter.crawl({ maxRecords: 1 });
-    const { value: batch } = await generator.next();
-    
-    expect(callCount).toBe(2);
-    expect(batch!.length).toBe(1);
-  });
+	test("filters by subcategory correctly", async () => {
+		global.fetch = mock(() => Promise.resolve(new Response(MOCK_ARXIV_XML)));
 
-  test("handles ArXiv fetch failure with retry", async () => {
-    let callCount = 0;
-    global.fetch = mock(() => {
-      callCount++;
-      if (callCount === 1) {
-        return Promise.reject(new Error("Network failure"));
-      }
-      return Promise.resolve(new Response(MOCK_ARXIV_XML));
-    });
+		// Request a different subcategory than what's in MOCK_ARXIV_XML
+		const options = { categories: ["math.GT"], maxRecords: 1 };
+		const generator = arxivAdapter.crawl(options);
 
-    const generator = arxivAdapter.crawl({ maxRecords: 1 });
-    const { value: batch } = await generator.next();
-    
-    expect(callCount).toBe(2);
-    expect(batch!.length).toBe(1);
-  });
+		const { done } = await generator.next();
+		// Should be done because no records matched the subcategory
+		expect(done).toBe(true);
+	});
+
+	test("handles ArXiv 503 Retry-After response", async () => {
+		let callCount = 0;
+		global.fetch = mock(() => {
+			callCount++;
+			if (callCount === 1) {
+				return Promise.resolve(
+					new Response("Service Unavailable", {
+						status: 503,
+						headers: { "Retry-After": "0" },
+					})
+				);
+			}
+			return Promise.resolve(new Response(MOCK_ARXIV_XML));
+		});
+
+		const generator = arxivAdapter.crawl({ maxRecords: 1 });
+		const { value: batch } = await generator.next();
+
+		expect(callCount).toBe(2);
+		expect(batch?.length).toBe(1);
+	});
+
+	test("handles ArXiv fetch failure with retry", async () => {
+		let callCount = 0;
+		global.fetch = mock(() => {
+			callCount++;
+			if (callCount === 1) {
+				return Promise.reject(new Error("Network failure"));
+			}
+			return Promise.resolve(new Response(MOCK_ARXIV_XML));
+		});
+
+		const generator = arxivAdapter.crawl({ maxRecords: 1 });
+		const { value: batch } = await generator.next();
+
+		expect(callCount).toBe(2);
+		expect(batch?.length).toBe(1);
+	});
 });
