@@ -34,9 +34,11 @@ describe("Server basic tests", () => {
 	});
 
 	test("onError returns 500 for generic error", async () => {
-		const consoleSpy = spyOn(console, "error").mockImplementation(() => {});
+		const consoleSpy = spyOn(console, "error").mockImplementation(
+			// intentional empty mock
+			() => undefined
+		);
 
-		// Buat app terpisah dengan onError handler yang sama
 		const testApp = new Elysia()
 			.onError(({ code, error, set }) => {
 				if (code === "VALIDATION") {
