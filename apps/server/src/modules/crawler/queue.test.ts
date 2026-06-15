@@ -94,13 +94,15 @@ describe("Crawler Queue", () => {
 		global.fetch = mock(() =>
 			Promise.resolve(
 				new Response(
-					'<OAI-PMH><ListRecords><record><metadata><arxiv><id>2101.00001</id><title>Test Title</title><authors><author><keyname>Author</keyname><forenames>A</forenames></author></authors></arxiv></metadata></record></ListRecords></OAI-PMH>'
+					"<OAI-PMH><ListRecords><record><metadata><arxiv><id>2101.00001</id><title>Test Title</title><authors><author><keyname>Author</keyname><forenames>A</forenames></author></authors></arxiv></metadata></record></ListRecords></OAI-PMH>"
 				)
 			)
 		) as any;
 
 		chain.from.mockImplementationOnce(() => chain);
-		chain.where.mockImplementationOnce(() => Promise.resolve([{ started_at: new Date() }]));
+		chain.where.mockImplementationOnce(() =>
+			Promise.resolve([{ started_at: new Date() }])
+		);
 
 		await processJob("h1", "arxiv", { maxRecords: 1 });
 
@@ -114,15 +116,19 @@ describe("Crawler Queue", () => {
 		global.fetch = mock(() =>
 			Promise.resolve(
 				new Response(
-					'<OAI-PMH><ListRecords><record><metadata><arxiv><id>2101.00002</id><title>Error Paper</title><authors><author><keyname>Error</keyname></author></authors></arxiv></metadata></record></ListRecords></OAI-PMH>'
+					"<OAI-PMH><ListRecords><record><metadata><arxiv><id>2101.00002</id><title>Error Paper</title><authors><author><keyname>Error</keyname></author></authors></arxiv></metadata></record></ListRecords></OAI-PMH>"
 				)
 			)
 		) as any;
 
 		// Mock insert to throw
-		chain.returning.mockImplementationOnce(() => Promise.reject(new Error("DB Insert failed")));
+		chain.returning.mockImplementationOnce(() =>
+			Promise.reject(new Error("DB Insert failed"))
+		);
 		chain.from.mockImplementationOnce(() => chain);
-		chain.where.mockImplementationOnce(() => Promise.resolve([{ started_at: new Date() }]));
+		chain.where.mockImplementationOnce(() =>
+			Promise.resolve([{ started_at: new Date() }])
+		);
 
 		await processJob("h2", "arxiv", { maxRecords: 1 });
 		// Should not throw, should capture error
