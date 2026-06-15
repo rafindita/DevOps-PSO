@@ -1,30 +1,25 @@
-# Stage 1: Dependencies
-FROM oven/bun:1.3.8 AS dependencies
+# Build stage
+FROM oven/bun:1-alpine AS builder
+
 WORKDIR /app
-COPY . .
+
+COPY package.json bun.lock tsconfig.json turbo.json ./
+COPY packages packages
+COPY apps apps
+
 RUN bun install
+RUN cd apps/server && bun run build
 
-# Stage 2: Builder
-FROM dependencies AS builder
-ENV NODE_ENV=production
-ENV SKIP_ENV_VALIDATION=1
-RUN bun run build
+# Runtime stage
+FROM oven/bun:1-alpine
 
-# Stage 3: Runner
-FROM oven/bun:1.3.8-slim AS runner
 WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=3000
-COPY --from=builder /app/apps/server/dist ./apps/server/dist
-COPY --from=builder /app/apps/web/dist ./apps/web/dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/server/node_modules ./apps/server/node_modules
-COPY --from=builder /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=builder /app/apps/server/package.json ./apps/server/package.json
-COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
-COPY --from=builder /app/package.json ./package.json
-COPY start.sh ./start.sh
-RUN chmod +x start.sh
-RUN sed -i 's/\r$//' start.sh
+
+COPY --from=builder /app/apps/server/dist ./dist
+COPY --from=builder /app/apps/server/package.json ./
+
 EXPOSE 3000
-CMD ["sh", "start.sh"]
+
+ENV NODE_ENV=production
+
+CMD ["bun", "run", "dist/index.mjs"]
