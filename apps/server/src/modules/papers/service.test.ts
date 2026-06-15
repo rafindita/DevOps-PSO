@@ -113,3 +113,68 @@ describe("Papers Service", () => {
 		expect(result).toEqual(["Nature", "Science"]);
 	});
 });
+
+test("searchPapers with journal and keyword filters (array params)", async () => {
+	chain.then.mockImplementationOnce((resolve: any) =>
+		resolve([{ count: "0" }])
+	);
+	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+
+	await searchPapers({
+		journal: ["Nature", "Science"],
+		keyword: ["AI", "ML"],
+		yearFrom: 2020,
+		yearTo: 2023,
+	});
+
+	expect(chain.from).toHaveBeenCalled();
+});
+
+test("searchPapers with sortBy date_asc", async () => {
+	chain.then.mockImplementationOnce((resolve: any) =>
+		resolve([{ count: "0" }])
+	);
+	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+
+	await searchPapers({ sortBy: "date_asc" });
+	expect(chain.limit).toHaveBeenCalled();
+});
+
+test("searchPapers with sortBy title_asc", async () => {
+	chain.then.mockImplementationOnce((resolve: any) =>
+		resolve([{ count: "0" }])
+	);
+	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+
+	await searchPapers({ sortBy: "title_asc" });
+	expect(chain.limit).toHaveBeenCalled();
+});
+
+test("searchPapers with sortBy author_asc", async () => {
+	chain.then.mockImplementationOnce((resolve: any) =>
+		resolve([{ count: "0" }])
+	);
+	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+
+	await searchPapers({ sortBy: "author_asc" });
+	expect(chain.limit).toHaveBeenCalled();
+});
+
+test("getRelatedPapers returns empty when source paper has no keywords", async () => {
+	chain.where.mockImplementationOnce(() =>
+		Promise.resolve([{ id: "1", keywords: null, authors: [] }])
+	);
+
+	const result = await getRelatedPapers("1");
+	expect(result).toEqual([]);
+});
+
+test("getPaper throws when not found", async () => {
+	chain.where.mockImplementationOnce(() => Promise.resolve([]));
+
+	expect(getPaper("not-exist")).rejects.toThrow();
+});
