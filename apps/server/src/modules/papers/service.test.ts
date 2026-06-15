@@ -48,13 +48,10 @@ describe("Papers Service", () => {
 			},
 		];
 
-		// 1. Count query
 		chain.then.mockImplementationOnce((resolve: any) =>
 			resolve([{ count: "1" }])
 		);
-		// 2. Main query
 		chain.then.mockImplementationOnce((resolve: any) => resolve(mockPapers));
-		// 3. Facets query
 		chain.then.mockImplementationOnce((resolve: any) => resolve(mockPapers));
 
 		const result = await searchPapers({ q: "test", author: "A1" });
@@ -74,6 +71,56 @@ describe("Papers Service", () => {
 		expect(chain.limit).toHaveBeenCalledWith(50);
 	});
 
+	test("searchPapers with journal and keyword filters (array params)", async () => {
+		chain.then.mockImplementationOnce((resolve: any) =>
+			resolve([{ count: "0" }])
+		);
+		chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+		chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+
+		await searchPapers({
+			journal: ["Nature", "Science"],
+			keyword: ["AI", "ML"],
+			yearFrom: 2020,
+			yearTo: 2023,
+		});
+
+		expect(chain.from).toHaveBeenCalled();
+	});
+
+	test("searchPapers with sortBy date_asc", async () => {
+		chain.then.mockImplementationOnce((resolve: any) =>
+			resolve([{ count: "0" }])
+		);
+		chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+		chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+
+		await searchPapers({ sortBy: "date_asc" });
+		expect(chain.limit).toHaveBeenCalled();
+	});
+
+	test("searchPapers with sortBy title_asc", async () => {
+		chain.then.mockImplementationOnce((resolve: any) =>
+			resolve([{ count: "0" }])
+		);
+		chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+		chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+
+		await searchPapers({ sortBy: "title_asc" });
+		expect(chain.limit).toHaveBeenCalled();
+	});
+
+	test("searchPapers with sortBy author_asc", async () => {
+		chain.then.mockImplementationOnce((resolve: any) =>
+			resolve([{ count: "0" }])
+		);
+		chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+		chain.then.mockImplementationOnce((resolve: any) => resolve([]));
+
+		await searchPapers({ sortBy: "author_asc" });
+		expect(chain.limit).toHaveBeenCalled();
+	});
+
 	test("getPaper returns paper when found", async () => {
 		const mockPaper = {
 			id: "1",
@@ -86,6 +133,12 @@ describe("Papers Service", () => {
 		expect(result?.title).toBe("Test Paper");
 	});
 
+	test("getPaper throws when not found", () => {
+		chain.where.mockImplementationOnce(() => Promise.resolve([]));
+
+		expect(getPaper("not-exist")).rejects.toThrow();
+	});
+
 	test("getRelatedPapers returns papers with similar keywords", async () => {
 		const sourcePaper = { id: "1", keywords: ["AI"], authors: ["A1"] };
 		const relatedPaper = {
@@ -95,14 +148,21 @@ describe("Papers Service", () => {
 			authors: ["A2"],
 		};
 
-		// 1. Get source paper
 		chain.where.mockImplementationOnce(() => Promise.resolve([sourcePaper]));
-		// 2. Get related papers
 		chain.limit.mockImplementationOnce(() => Promise.resolve([relatedPaper]));
 
 		const result = await getRelatedPapers("1");
 		expect(result).toHaveLength(1);
 		expect(result[0]?.title).toBe("Related");
+	});
+
+	test("getRelatedPapers returns empty when source paper has no keywords", async () => {
+		chain.where.mockImplementationOnce(() =>
+			Promise.resolve([{ id: "1", keywords: null, authors: [] }])
+		);
+
+		const result = await getRelatedPapers("1");
+		expect(result).toEqual([]);
 	});
 
 	test("getJournals returns list of journals", async () => {
@@ -112,69 +172,4 @@ describe("Papers Service", () => {
 		const result = await getJournals();
 		expect(result).toEqual(["Nature", "Science"]);
 	});
-});
-
-test("searchPapers with journal and keyword filters (array params)", async () => {
-	chain.then.mockImplementationOnce((resolve: any) =>
-		resolve([{ count: "0" }])
-	);
-	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
-	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
-
-	await searchPapers({
-		journal: ["Nature", "Science"],
-		keyword: ["AI", "ML"],
-		yearFrom: 2020,
-		yearTo: 2023,
-	});
-
-	expect(chain.from).toHaveBeenCalled();
-});
-
-test("searchPapers with sortBy date_asc", async () => {
-	chain.then.mockImplementationOnce((resolve: any) =>
-		resolve([{ count: "0" }])
-	);
-	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
-	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
-
-	await searchPapers({ sortBy: "date_asc" });
-	expect(chain.limit).toHaveBeenCalled();
-});
-
-test("searchPapers with sortBy title_asc", async () => {
-	chain.then.mockImplementationOnce((resolve: any) =>
-		resolve([{ count: "0" }])
-	);
-	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
-	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
-
-	await searchPapers({ sortBy: "title_asc" });
-	expect(chain.limit).toHaveBeenCalled();
-});
-
-test("searchPapers with sortBy author_asc", async () => {
-	chain.then.mockImplementationOnce((resolve: any) =>
-		resolve([{ count: "0" }])
-	);
-	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
-	chain.then.mockImplementationOnce((resolve: any) => resolve([]));
-
-	await searchPapers({ sortBy: "author_asc" });
-	expect(chain.limit).toHaveBeenCalled();
-});
-
-test("getRelatedPapers returns empty when source paper has no keywords", async () => {
-	chain.where.mockImplementationOnce(() =>
-		Promise.resolve([{ id: "1", keywords: null, authors: [] }])
-	);
-
-	const result = await getRelatedPapers("1");
-	expect(result).toEqual([]);
-});
-
-test("getPaper throws when not found", async () => {
-	chain.where.mockImplementationOnce(() => Promise.resolve([]));
-
-	expect(getPaper("not-exist")).rejects.toThrow();
 });
