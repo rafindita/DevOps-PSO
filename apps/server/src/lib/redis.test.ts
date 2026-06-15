@@ -7,7 +7,9 @@ mock.module("ioredis", () => {
 			private handlers: Record<string, ((...args: unknown[]) => void)[]> = {};
 
 			on(event: string, handler: (...args: unknown[]) => void) {
-				if (!this.handlers[event]) this.handlers[event] = [];
+				if (!this.handlers[event]) {
+					this.handlers[event] = [];
+				}
 				this.handlers[event].push(handler);
 			}
 
