@@ -36,7 +36,7 @@
     "db:watch": "turbo -F @scholar-seek/db db:watch",
     "db:stop": "turbo -F @scholar-seek/db db:stop",
     "db:down": "turbo -F @scholar-seek/db db:down",
-    "test": "SKIP_ENV_VALIDATION=1 turbo test -- ./src",
+    "test": "SKIP_ENV_VALIDATION=1 turbo test -- --coverage --coverage-threshold=0.8",
     "check": "ultracite check",
     "fix": "ultracite fix"
   },

@@ -21,6 +21,11 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Create dummy frontend assets for server tests
+        run: |
+          mkdir -p apps/web/dist
+          echo "<html></html>" > apps/web/dist/index.html
+
       - name: Run Lint
         run: bun run check
 

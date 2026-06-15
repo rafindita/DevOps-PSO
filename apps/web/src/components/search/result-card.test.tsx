@@ -1,6 +1,5 @@
-import { describe, expect, mock, test } from "bun:test";
-import { render, screen } from "@testing-library/react";
-import { ResultCard } from "./result-card";
+import "../../test-setup";
+import { describe, expect, test, mock } from "bun:test";
 
 // Mock Link from TanStack Router
 mock.module("@tanstack/react-router", () => ({
@@ -10,6 +9,10 @@ mock.module("@tanstack/react-router", () => ({
 		</a>
 	),
 }));
+
+// Import after setup and mock
+const { render, screen } = require("@testing-library/react");
+const { ResultCard } = require("./result-card");
 
 const MOCK_PAPER = {
 	id: "1",

@@ -1,0 +1,4 @@
+[test]
+coverage = true
+coverageThreshold = 0.8
+ignore = ["**/node_modules/**", "**/dist/**", "**/packages/ui/**"]
