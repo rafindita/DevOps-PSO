@@ -4,14 +4,14 @@ import { describe, expect, mock, test } from "bun:test";
 mock.module("bullmq", () => {
 	return {
 		Queue: class MockQueue {
-			constructor() {}
 			add() {
 				return Promise.resolve({ id: "job-1" });
 			}
 		},
 		Worker: class MockWorker {
-			constructor(name: string, processor: any) {}
-			on() { return this; }
+			on() {
+				return this;
+			}
 			close() {
 				return Promise.resolve();
 			}
@@ -21,7 +21,11 @@ mock.module("bullmq", () => {
 
 // Mock redis
 mock.module("../../lib/redis", () => ({
-	getRedis: () => ({ on: () => {} }),
+	getRedis: () => ({
+		on: () => {
+			// mock on
+		},
+	}),
 }));
 
 // Mock DB
@@ -38,7 +42,9 @@ const chain = {
 	from: mock(() => chain),
 };
 
-chain.limit.mockImplementation(() => Promise.resolve([{ started_at: new Date() }]));
+chain.limit.mockImplementation(() =>
+	Promise.resolve([{ started_at: new Date() }])
+);
 
 const mockDb = {
 	update: mock(() => chain),
@@ -50,7 +56,12 @@ mock.module("@scholar-seek/db", () => ({
 	db: mockDb,
 }));
 
-import { getCrawlQueue, cleanupStuckJobs, stopCrawlWorker, startCrawlWorker } from "./queue";
+import {
+	cleanupStuckJobs,
+	getCrawlQueue,
+	startCrawlWorker,
+	stopCrawlWorker,
+} from "./queue";
 
 describe("Crawler Queue", () => {
 	test("getCrawlQueue returns a queue", () => {

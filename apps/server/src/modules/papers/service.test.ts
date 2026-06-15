@@ -7,6 +7,7 @@ const chain = {
 	orderBy: mock(() => chain),
 	limit: mock(() => chain),
 	offset: mock(() => chain),
+	// biome-ignore lint/suspicious/noThenProperty: required for mock chain
 	then: mock((onFulfilled) => Promise.resolve([]).then(onFulfilled)),
 	selectDistinct: mock(() => chain),
 };
@@ -48,20 +49,14 @@ describe("Papers Service", () => {
 		];
 
 		// 1. Count query
-		chain.then.mockImplementationOnce((resolve) =>
-			resolve([{ count: "1" }])
-		);
+		chain.then.mockImplementationOnce((resolve) => resolve([{ count: "1" }]));
 		// 2. Main query
-		chain.then.mockImplementationOnce((resolve) =>
-			resolve(mockPapers)
-		);
+		chain.then.mockImplementationOnce((resolve) => resolve(mockPapers));
 		// 3. Facets query
-		chain.then.mockImplementationOnce((resolve) =>
-			resolve(mockPapers)
-		);
+		chain.then.mockImplementationOnce((resolve) => resolve(mockPapers));
 
 		const result = await searchPapers({ q: "test", author: "A1" });
-		
+
 		expect(result.papers).toHaveLength(1);
 		expect(result.facets.journals).toBeDefined();
 	});

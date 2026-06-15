@@ -31,7 +31,7 @@ mock.module("./queue", () => ({
 	}),
 }));
 
-import { startCrawl, getCrawlStatus, getCrawlHistory } from "./service";
+import { getCrawlHistory, getCrawlStatus, startCrawl } from "./service";
 
 describe("Crawler Service", () => {
 	test("startCrawl enqueues a job and returns IDs", async () => {

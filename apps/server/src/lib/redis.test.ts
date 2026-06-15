@@ -4,8 +4,9 @@ import { describe, expect, mock, test } from "bun:test";
 mock.module("ioredis", () => {
 	return {
 		default: class MockRedis {
-			constructor() {}
-			on() {}
+			on() {
+				// intentional empty block for mock
+			}
 		},
 	};
 });

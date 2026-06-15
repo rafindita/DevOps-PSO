@@ -1,5 +1,5 @@
 import "../../test-setup";
-import { describe, expect, test, mock } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 
 // Mock Link from TanStack Router
 mock.module("@tanstack/react-router", () => ({

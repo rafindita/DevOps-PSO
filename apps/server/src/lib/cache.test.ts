@@ -1,4 +1,4 @@
-import { describe, expect, mock, test, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 
 // Mock redis
 const mockRedis = {
@@ -6,14 +6,16 @@ const mockRedis = {
 	set: mock(() => Promise.resolve("OK")),
 	keys: mock(() => Promise.resolve([])),
 	del: mock(() => Promise.resolve(0)),
-	on: mock(() => {}),
+	on: mock(() => {
+		// intentional empty block for mock
+	}),
 };
 
 mock.module("./redis", () => ({
 	getRedis: () => mockRedis,
 }));
 
-import { cacheGet, cacheSet, cacheDel } from "./cache";
+import { cacheDel, cacheGet, cacheSet } from "./cache";
 
 describe("Cache Lib", () => {
 	beforeEach(() => {
@@ -49,9 +51,7 @@ describe("Cache Lib", () => {
 	});
 
 	test("cacheDel deletes multiple keys when pattern matches", async () => {
-		mockRedis.keys.mockImplementation(() =>
-			Promise.resolve(["key1", "key2"])
-		);
+		mockRedis.keys.mockImplementation(() => Promise.resolve(["key1", "key2"]));
 		await cacheDel("pattern:*");
 		expect(mockRedis.keys).toHaveBeenCalledWith("pattern:*");
 		expect(mockRedis.del).toHaveBeenCalledWith("key1", "key2");
