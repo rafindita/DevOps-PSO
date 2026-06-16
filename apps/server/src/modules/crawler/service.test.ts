@@ -32,6 +32,7 @@ mock.module("./queue", () => ({
 	getCrawlQueue: () => ({
 		add: () => Promise.resolve({ id: "job-id" }),
 	}),
+	processJob: mock(() => Promise.resolve()),
 }));
 
 import { getCrawlHistory, getCrawlStatus, startCrawl } from "./service";
@@ -92,5 +93,99 @@ describe("Crawler Service", () => {
 		);
 		const history = await getCrawlHistory();
 		expect(Array.isArray(history)).toBe(true);
+	});
+
+	test("startCrawl throws when DB returns no history row", async () => {
+		mockDb.insert.mockImplementationOnce(() => ({
+			values: mock(() => ({
+				returning: mock(() => Promise.resolve([])),
+			})),
+		}));
+
+		try {
+			await startCrawl({ source: "arxiv" });
+			expect(true).toBe(false);
+		} catch (e: unknown) {
+			expect((e as Error).message).toContain(
+				"Failed to create crawl history record"
+			);
+		}
+	});
+
+	test("startCrawl handles queue addition or DB failure gracefully", async () => {
+		mockDb.insert.mockImplementationOnce(() => ({
+			values: mock(() => ({
+				returning: mock(() => Promise.reject(new Error("DB Insert failed"))),
+			})),
+		}));
+
+		try {
+			await startCrawl({ source: "arxiv" });
+			expect(true).toBe(false);
+		} catch (e: unknown) {
+			expect((e as Error).message).toBe("DB Insert failed");
+		}
+	});
+
+	test("getCrawlStatus returns null when row does not exist", async () => {
+		mockDb.select.mockImplementationOnce(
+			() =>
+				({
+					from: mock(() => ({
+						where: mock(() => ({
+							limit: mock(() => Promise.resolve([])),
+						})),
+					})),
+				}) as any
+		);
+
+		const status = await getCrawlStatus("unknown-j1");
+		expect(status).toBeNull();
+	});
+
+	test("getLastUpdated returns stats", async () => {
+		mockDb.select.mockImplementationOnce(
+			() =>
+				({
+					from: mock(() => ({
+						where: mock(() => ({
+							orderBy: mock(() => ({
+								limit: mock(() =>
+									Promise.resolve([
+										{
+											completed_at: new Date(),
+											papers_found: 10,
+											papers_inserted: 10,
+											papers_skipped: 0,
+											duration_ms: 1000,
+										},
+									])
+								),
+							})),
+						})),
+					})),
+				}) as any
+		);
+
+		const res = await (await import("./service")).getLastUpdated();
+		expect(res?.papersFound).toBe(10);
+	});
+
+	test("getLastUpdated returns null when no rows", async () => {
+		mockDb.select.mockImplementationOnce(
+			() =>
+				({
+					from: mock(() => ({
+						where: mock(() => ({
+							orderBy: mock(() => ({
+								limit: mock(() => Promise.resolve([])),
+							})),
+						})),
+					})),
+				}) as any
+		);
+
+		const res = await (await import("./service")).getLastUpdated();
+		expect(res).toBeNull();
 	});
 });

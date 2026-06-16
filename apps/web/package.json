@@ -29,7 +29,8 @@
     "sonner": "catalog:",
     "tailwindcss": "catalog:",
     "vite-tsconfig-paths": "^5.1.4",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@scholar-seek/config": "workspace:*",

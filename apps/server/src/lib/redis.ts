@@ -2,6 +2,7 @@ import { env } from "@scholar-seek/env/server";
 import Redis from "ioredis";
 
 let client: Redis | null = null;
+let hasLoggedError = false;
 
 export function getRedis(): Redis | null {
 	if (!client) {
@@ -12,8 +13,22 @@ export function getRedis(): Redis | null {
 				tls: {},
 				enableOfflineQueue: false,
 			});
+
 			client.on("error", (err) => {
-				console.error("[redis] connection error:", err.message);
+				if (!hasLoggedError) {
+					console.warn(
+						"[Redis] Connection error (gracefully handled):",
+						err.message
+					);
+					hasLoggedError = true;
+				}
+			});
+
+			client.on("connect", () => {
+				if (hasLoggedError) {
+					console.info("[Redis] Connection restored.");
+					hasLoggedError = false;
+				}
 			});
 		} catch (_e) {
 			return null;

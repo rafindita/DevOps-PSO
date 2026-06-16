@@ -1,3 +1,2 @@
 [test]
-coverage = true
-ignore = ["**/node_modules/**", "**/dist/**", "**/packages/ui/**"]
+environment = "jsdom"

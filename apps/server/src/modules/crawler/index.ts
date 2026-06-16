@@ -77,4 +77,24 @@ export const crawlerModule = new Elysia({
 				tags: ["crawler"],
 			},
 		}
+	)
+	.get(
+		"/crawl/last-updated",
+		async ({ set }) => {
+			const { getLastUpdated } = await import("./service");
+			const result = await getLastUpdated();
+			if (!result) {
+				set.status = 404;
+				return { error: "No completed crawl history found" };
+			}
+			return result;
+		},
+		{
+			detail: {
+				summary: "Get last updated crawl stats",
+				description:
+					"Return quantification metrics for the most recent completed crawl.",
+				tags: ["crawler"],
+			},
+		}
 	);

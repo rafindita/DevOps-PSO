@@ -5,11 +5,19 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
 	if (!redis) {
 		return null;
 	}
-	const raw = await redis.get(key);
-	if (!raw) {
+	try {
+		const raw = await redis.get(key);
+		if (!raw) {
+			return null;
+		}
+		return JSON.parse(raw) as T;
+	} catch (err) {
+		console.warn(
+			`[Redis] get failed for key ${key}, bypassing cache:`,
+			(err as Error).message
+		);
 		return null;
 	}
-	return JSON.parse(raw) as T;
 }
 
 export async function cacheSet<T>(
@@ -21,7 +29,11 @@ export async function cacheSet<T>(
 	if (!redis) {
 		return;
 	}
-	await redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
+	try {
+		await redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
+	} catch (err) {
+		console.warn(`[Redis] set failed for key ${key}:`, (err as Error).message);
+	}
 }
 
 export async function cacheDel(pattern: string): Promise<void> {
@@ -29,8 +41,15 @@ export async function cacheDel(pattern: string): Promise<void> {
 	if (!redis) {
 		return;
 	}
-	const keys = await redis.keys(pattern);
-	if (keys.length > 0) {
-		await redis.del(...keys);
+	try {
+		const keys = await redis.keys(pattern);
+		if (keys.length > 0) {
+			await redis.del(...keys);
+		}
+	} catch (err) {
+		console.warn(
+			`[Redis] del failed for pattern ${pattern}:`,
+			(err as Error).message
+		);
 	}
 }

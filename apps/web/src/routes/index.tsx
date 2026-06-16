@@ -1,6 +1,16 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Atom, BookOpen, Globe, Lightbulb, Stethoscope } from "lucide-react";
+import {
+	Atom,
+	BookOpen,
+	Folder,
+	Globe,
+	Lightbulb,
+	Stethoscope,
+} from "lucide-react";
 import { SearchBar } from "../components/search/search-bar";
+import { api } from "../lib/api/treaty";
+import { useAuthStore } from "../lib/store/auth";
 
 const TOPICS = [
 	{ name: "Artificial Intelligence", icon: Lightbulb, query: "AI" },
@@ -24,6 +34,20 @@ export const Route = createFileRoute("/")({
 });
 
 function HomeComponent() {
+	const { token } = useAuthStore();
+
+	const { data: collectionsData } = useQuery({
+		queryKey: ["collections"],
+		queryFn: async () => {
+			const { data, error } = await api.api.collections.get();
+			if (error) {
+				throw error;
+			}
+			return data;
+		},
+		enabled: !!token,
+	});
+
 	return (
 		<div className="relative flex min-h-[calc(100vh-140px)] flex-col items-center overflow-hidden px-4 py-20">
 			{/* Background Glow Orbs */}
@@ -65,6 +89,53 @@ function HomeComponent() {
 					</div>
 				</div>
 			</div>
+
+			{/* Research Folders Widget */}
+			{token &&
+				collectionsData?.collections &&
+				collectionsData.collections.length > 0 && (
+					<div className="motion-safe:fade-in motion-safe:slide-in-from-bottom-4 mb-16 w-full max-w-5xl fill-mode-both motion-safe:animate-in motion-safe:delay-200 motion-safe:duration-700">
+						<div className="mb-6 flex items-center justify-between">
+							<h2 className="flex items-center gap-2 font-bold text-foreground text-xl tracking-tight">
+								<div
+									aria-hidden="true"
+									className="h-5 w-1.5 rounded-full bg-chart-2"
+								/>
+								Your Research Folders
+							</h2>
+							<Link
+								className="font-medium text-primary text-sm hover:underline"
+								to="/bookmarks"
+							>
+								View all folders
+							</Link>
+						</div>
+						<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+							{collectionsData.collections
+								.slice(0, 4)
+								.map((col: { id: string; name: string }) => (
+									<Link
+										className="group flex items-center gap-3 rounded-2xl border border-border/40 bg-card/50 p-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-chart-2/50 hover:bg-card/90 hover:shadow-md"
+										key={col.id}
+										search={{ collection: col.id }}
+										to="/bookmarks"
+									>
+										<div className="rounded-full bg-muted/50 p-2.5 transition-colors group-hover:bg-chart-2/10">
+											<Folder className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-chart-2" />
+										</div>
+										<div className="flex min-w-0 flex-col">
+											<span className="truncate font-semibold text-[15px]">
+												{col.name}
+											</span>
+											<span className="text-muted-foreground text-xs">
+												{col.bookmarkCount} papers
+											</span>
+										</div>
+									</Link>
+								))}
+						</div>
+					</div>
+				)}
 
 			{/* Featured Topics Section */}
 			<div className="motion-safe:fade-in motion-safe:slide-in-from-bottom-4 w-full max-w-5xl fill-mode-both motion-safe:animate-in motion-safe:delay-300 motion-safe:duration-700">

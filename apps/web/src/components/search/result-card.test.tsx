@@ -10,8 +10,15 @@ mock.module("@tanstack/react-router", () => ({
 	),
 }));
 
+// Mock sessionStorage
+const mockSessionStorage = {
+	setItem: mock(),
+	getItem: mock(),
+};
+(globalThis as any).sessionStorage = mockSessionStorage;
+
 // Import after setup and mock
-const { render, screen } = require("@testing-library/react");
+const { render } = require("@testing-library/react");
 const { ResultCard } = require("./result-card");
 
 const MOCK_PAPER = {
@@ -28,14 +35,30 @@ const MOCK_PAPER = {
 
 const TEST_JOURNAL_REGEX = /Test Journal/;
 
-describe("ResultCard", () => {
-	test("renders paper information correctly", () => {
-		render(<ResultCard paper={MOCK_PAPER as any} />);
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-		expect(screen.getByText("Test Paper")).toBeDefined();
-		expect(screen.getByText("Author One")).toBeDefined();
-		expect(screen.getByText("Author Two")).toBeDefined();
-		expect(screen.getByText(TEST_JOURNAL_REGEX)).toBeDefined();
-		expect(screen.getByText("View source")).toBeDefined();
+describe("ResultCard", () => {
+	test("renders paper information correctly and saves state on click", () => {
+		const queryClient = new QueryClient();
+		const { getByText, getAllByRole } = render(
+			<QueryClientProvider client={queryClient}>
+				<ResultCard paper={MOCK_PAPER as any} />
+			</QueryClientProvider>
+		);
+
+		expect(getByText("Test Paper")).toBeDefined();
+		expect(getByText("Author One")).toBeDefined();
+		expect(getByText("Author Two")).toBeDefined();
+		expect(getByText(TEST_JOURNAL_REGEX)).toBeDefined();
+		expect(getByText("View source")).toBeDefined();
+
+		const links = getAllByRole("link");
+		const { fireEvent } = require("@testing-library/react");
+		fireEvent.click(links[0]);
+
+		expect((globalThis as any).sessionStorage.setItem).toHaveBeenCalledWith(
+			"lastSearchUrl",
+			expect.any(String)
+		);
 	});
 });
