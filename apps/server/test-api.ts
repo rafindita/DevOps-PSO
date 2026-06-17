@@ -15,7 +15,8 @@ async function runTests() {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ username, password }),
 		});
-		const data = (await res.json()) as unknown as Record<string, unknown>;
+		// biome-ignore lint/suspicious/noExplicitAny: test
+		const data = (await res.json()) as any;
 		console.log("Status:", res.status);
 		console.log("Response:", data, "\n");
 	} catch (e) {
@@ -30,7 +31,8 @@ async function runTests() {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ username, password }),
 		});
-		const data = (await res.json()) as unknown as Record<string, unknown>;
+		// biome-ignore lint/suspicious/noExplicitAny: test
+		const data = (await res.json()) as any;
 		console.log("Status:", res.status);
 		console.log("Response:", data, "\n");
 		if (data.token) {
@@ -56,10 +58,8 @@ async function runTests() {
 		// Assuming we have a /papers endpoint from the existing code
 		const papersRes = await fetch(`${BASE_URL}/papers?limit=1`);
 		if (papersRes.ok) {
-			const papersData = (await papersRes.json()) as unknown as Record<
-				string,
-				unknown
-			>;
+			// biome-ignore lint/suspicious/noExplicitAny: test
+			const papersData = (await papersRes.json()) as any;
 			if (papersData.data && papersData.data.length > 0) {
 				paperId = papersData.data[0].id;
 				console.log(`Found paper: ${paperId}\n`);
@@ -85,7 +85,8 @@ async function runTests() {
 			},
 			body: JSON.stringify({ paperId }),
 		});
-		const data = (await res.json()) as unknown as Record<string, unknown>;
+		// biome-ignore lint/suspicious/noExplicitAny: test
+		const data = (await res.json()) as any;
 		console.log("Status:", res.status);
 		console.log("Response:", data, "\n");
 	} catch (e) {
@@ -101,7 +102,8 @@ async function runTests() {
 				Authorization: `Bearer ${jwtToken}`,
 			},
 		});
-		const data = (await res.json()) as unknown as Record<string, unknown>;
+		// biome-ignore lint/suspicious/noExplicitAny: test
+		const data = (await res.json()) as any;
 		console.log("Status:", res.status);
 		console.log("Response:", data, "\n");
 	} catch (e) {
@@ -112,7 +114,8 @@ async function runTests() {
 	console.log("▶️  Testing Last Updated Crawler...");
 	try {
 		const res = await fetch(`${BASE_URL}/crawl/last-updated`);
-		const data = (await res.json()) as unknown as Record<string, unknown>;
+		// biome-ignore lint/suspicious/noExplicitAny: test
+		const data = (await res.json()) as any;
 		console.log("Status:", res.status);
 		console.log("Response:", data, "\n");
 	} catch (e) {

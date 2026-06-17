@@ -34,7 +34,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/danielbarz/devops-pso:${{ github.sha }}
+          tags: ghcr.io/rafindita/devops-pso:${{ github.sha }}
           file: ./Dockerfile
 
   deploy:
@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'scholarseek-app-7670'
           slot-name: 'Production'
-          images: 'ghcr.io/danielbarz/devops-pso:${{ github.sha }}'
+          images: 'ghcr.io/rafindita/devops-pso:${{ github.sha }}'
