@@ -235,11 +235,11 @@ function BookmarksPage() {
 					}
 					return (
 						<div className="flex flex-col gap-4">
-							{filteredBookmarks.map(
-								(b: { id: string; paper: Record<string, unknown> }) => (
-									<ResultCard key={b.id} paper={b.paper} />
-								)
-							)}
+							{/* biome-ignore lint/suspicious/noExplicitAny: treaty type issue */}
+							{filteredBookmarks.map((b: any) => (
+								/* biome-ignore lint/suspicious/noExplicitAny: treaty type issue */
+								<ResultCard key={b.id} paper={b.paper as any} />
+							))}
 						</div>
 					);
 				})()}

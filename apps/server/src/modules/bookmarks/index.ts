@@ -25,7 +25,11 @@ export const bookmarksModule = new Elysia({ prefix: "/api" })
 		}
 
 		const payload = await jwt.verify(token);
-		if (!payload?.id) {
+		if (!payload) {
+			set.status = 401;
+			throw new Error("Unauthorized");
+		}
+		if (!payload.id) {
 			set.status = 401;
 			throw new Error("Unauthorized");
 		}

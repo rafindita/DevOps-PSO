@@ -41,7 +41,8 @@ function AuthSection() {
 		data: { user?: unknown; token?: string } | undefined
 	) => {
 		if (data?.user && data?.token) {
-			setAuth(data.user as Record<string, unknown>, data.token);
+			// biome-ignore lint/suspicious/noExplicitAny: treaty type issue
+			setAuth(data.user as any, data.token);
 			setIsOpen(false);
 			return true;
 		}
@@ -63,7 +64,6 @@ function AuthSection() {
 			setIsLoading(true);
 			setError("");
 			const endpoint = isLogin ? api.api.auth.login : api.api.auth.register;
-			// @ts-expect-error
 			const { data, error: apiError } = await endpoint.post({
 				username,
 				password,
@@ -120,6 +120,7 @@ function AuthSection() {
 
 	return (
 		<Dialog onOpenChange={setIsOpen} open={isOpen}>
+			{/* @ts-ignore */}
 			<DialogTrigger asChild>
 				<Button size="sm" variant="outline">
 					Login / Register
@@ -213,7 +214,10 @@ function ScrapingSection() {
 		queryFn: async () => {
 			const { data, error } = await api.api.crawl["last-updated"].get();
 			if (error) {
-				if (error.status === 401 || error.status === 500) {
+				if (
+					(error.status as number) === 401 ||
+					(error.status as number) === 500
+				) {
 					useAuthStore.getState().logout();
 				}
 				if (error.status === 404) {
@@ -237,7 +241,10 @@ function ScrapingSection() {
 				.status({ jobId: activeJobId })
 				.get();
 			if (error) {
-				if (error.status === 401 || error.status === 500) {
+				if (
+					(error.status as number) === 401 ||
+					(error.status as number) === 500
+				) {
 					useAuthStore.getState().logout();
 				}
 				if (error.status === 404) {
@@ -312,19 +319,18 @@ function ScrapingSection() {
 	}
 
 	let statusText = "Never";
-	let _statusColor = "text-muted-foreground";
 
-	if (crawlData?.status === "failed") {
+	// biome-ignore lint/suspicious/noExplicitAny: treaty type issue
+	const crawlDataAny = crawlData as any;
+	if (crawlDataAny?.status === "failed") {
 		statusText = "Failed";
-		_statusColor = "text-destructive";
-	} else if (crawlData?.status === "running") {
+	} else if (crawlDataAny?.status === "running") {
 		statusText = "Running...";
-		_statusColor = "text-yellow-500 animate-pulse";
 	} else if (crawlLoading) {
 		statusText = "Loading...";
-	} else if (crawlData?.completedAt) {
-		statusText = `Last updated: ${formatDate(crawlData.completedAt)} (${
-			crawlData.papersFound || 0
+	} else if (crawlDataAny?.completedAt) {
+		statusText = `Last updated: ${formatDate(crawlDataAny.completedAt)} (${
+			crawlDataAny.papersFound || 0
 		} papers)`;
 	}
 

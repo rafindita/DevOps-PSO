@@ -93,8 +93,12 @@ export async function processJob(
 
 			try {
 				// 2. PRE-FILTERING
-				const duplicates = batch.filter((p) => existingSet.has(p.source_id));
-				const newPapers = batch.filter((p) => !existingSet.has(p.source_id));
+				const duplicates = batch.filter((p) =>
+					existingSet.has(p.source_id ?? null)
+				);
+				const newPapers = batch.filter(
+					(p) => !existingSet.has(p.source_id ?? null)
+				);
 
 				// 3. PERFORMANCE LOGGING
 				console.log(
@@ -111,7 +115,7 @@ export async function processJob(
 
 				// Update memory set so we don't insert duplicates within the same run
 				for (const p of newPapers) {
-					existingSet.add(p.source_id);
+					existingSet.add(p.source_id ?? null);
 				}
 
 				if (newPapers.length > 0) {

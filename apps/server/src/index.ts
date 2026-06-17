@@ -67,8 +67,8 @@ const app = new Elysia()
 		set.status = 500;
 		return {
 			error: "Internal Server Error",
-			detail: error.message,
-			stack: error.stack,
+			detail: error instanceof Error ? error.message : String(error),
+			stack: error instanceof Error ? error.stack : undefined,
 		};
 	})
 	.use(cors())

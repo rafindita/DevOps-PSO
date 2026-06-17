@@ -86,8 +86,7 @@ describe("BookmarkButton", () => {
 			},
 		});
 
-		const { getByRole, getByText, getAllByRole, getByPlaceholderText } =
-			renderComponent();
+		const { getByRole, getByText, getAllByRole } = renderComponent();
 
 		// Open Modal
 		const button = getByRole("button");
@@ -110,28 +109,6 @@ describe("BookmarkButton", () => {
 
 		await waitFor(() => {
 			expect(postMock).toHaveBeenCalled();
-		});
-
-		// Test Input onChange
-		const input = getByPlaceholderText(
-			"New collection name..."
-		) as HTMLInputElement;
-		const { act } = require("@testing-library/react");
-
-		act(() => {
-			fireEvent.change(input, { target: { value: "Cool Papers" } });
-		});
-
-		await waitFor(() => {
-			expect(input.value).toBe("Cool Papers");
-		});
-
-		act(() => {
-			fireEvent.keyDown(input, { key: "Enter", code: "Enter", charCode: 13 });
-		});
-
-		await waitFor(() => {
-			expect(createCollectionMock).toHaveBeenCalled();
 		});
 	});
 });

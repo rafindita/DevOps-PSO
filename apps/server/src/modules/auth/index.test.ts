@@ -34,7 +34,7 @@ describe("Auth Module", () => {
 				body: JSON.stringify({ username: "testuser", password: "password123" }),
 			})
 		);
-		const data = await response.json();
+		const data = (await response.json()) as any;
 		expect(response.status).toBe(200);
 		expect(data.user.username).toBe("testuser");
 	});
@@ -68,7 +68,7 @@ describe("Auth Module", () => {
 		);
 
 		expect(response.status).toBe(200);
-		const data = await response.json();
+		const data = (await response.json()) as any;
 		expect(data.token).toBeDefined();
 		expect(data.user.username).toBe("testuser");
 	});

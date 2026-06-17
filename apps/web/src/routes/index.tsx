@@ -113,26 +113,32 @@ function HomeComponent() {
 						<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
 							{collectionsData.collections
 								.slice(0, 4)
-								.map((col: { id: string; name: string }) => (
-									<Link
-										className="group flex items-center gap-3 rounded-2xl border border-border/40 bg-card/50 p-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-chart-2/50 hover:bg-card/90 hover:shadow-md"
-										key={col.id}
-										search={{ collection: col.id }}
-										to="/bookmarks"
-									>
-										<div className="rounded-full bg-muted/50 p-2.5 transition-colors group-hover:bg-chart-2/10">
-											<Folder className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-chart-2" />
-										</div>
-										<div className="flex min-w-0 flex-col">
-											<span className="truncate font-semibold text-[15px]">
-												{col.name}
-											</span>
-											<span className="text-muted-foreground text-xs">
-												{col.bookmarkCount} papers
-											</span>
-										</div>
-									</Link>
-								))}
+								.map(
+									(col: {
+										id: string;
+										name: string;
+										bookmarkCount: number;
+									}) => (
+										<Link
+											className="group flex items-center gap-3 rounded-2xl border border-border/40 bg-card/50 p-4 shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-chart-2/50 hover:bg-card/90 hover:shadow-md"
+											key={col.id}
+											search={{ collection: col.id }}
+											to="/bookmarks"
+										>
+											<div className="rounded-full bg-muted/50 p-2.5 transition-colors group-hover:bg-chart-2/10">
+												<Folder className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-chart-2" />
+											</div>
+											<div className="flex min-w-0 flex-col">
+												<span className="truncate font-semibold text-[15px]">
+													{col.name}
+												</span>
+												<span className="text-muted-foreground text-xs">
+													{col.bookmarkCount} papers
+												</span>
+											</div>
+										</Link>
+									)
+								)}
 						</div>
 					</div>
 				)}
