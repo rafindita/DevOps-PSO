@@ -33,7 +33,9 @@ const PORT = Number(process.env.PORT) || 3000;
  * kita WAJIB memanggil .listen() agar server aktif.
  */
 app.listen({ port: PORT, hostname: "0.0.0.0" }, (server) => {
-  console.log(`API Server running at http://${server?.hostname}:${server?.port}`);
+  console.log(
+    `API Server running at http://${server?.hostname}:${server?.port}`
+  );
 });
 
 export default app;
