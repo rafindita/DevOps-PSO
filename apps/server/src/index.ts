@@ -1,5 +1,4 @@
 import { cors } from "@elysiajs/cors";
-import { db } from "@scholar-seek/db";
 import { Elysia } from "elysia";
 import { authModule } from "./modules/auth";
 import { bookmarksModule } from "./modules/bookmarks";
@@ -15,6 +14,13 @@ const app = new Elysia()
     .get("/health", () => ({ status: "ok" }));
 
 const PORT = Number(process.env.PORT) || 3000;
-app.listen({ port: PORT, hostname: "0.0.0.0" }, (server) => {
-    console.log(`API Server running at http://${server?.hostname}:${server?.port}`);
-});
+
+// Logika perbaikan: Hanya jalankan .listen() jika bukan dalam mode production
+// Mode production di Bun biasanya menggunakan export default untuk di-serve oleh runner
+if (process.env.NODE_ENV !== "production") {
+    app.listen({ port: PORT, hostname: "0.0.0.0" }, (server) => {
+        console.log(`API Server running at http://${server?.hostname}:${server?.port}`);
+    });
+}
+
+export default app;
