@@ -70,6 +70,12 @@ jobs:
     steps:
       - name: Execute Remote SSH Commands
         uses: appleboy/ssh-action@v1.0.3
+        # BLOK KRITIKAL: Pemetaan GitHub Secrets ke Runner Environment
+        env:
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          PROD_REDIS_URL: ${{ secrets.PROD_REDIS_URL }}
+          PROD_CORS_ORIGIN: ${{ secrets.PROD_CORS_ORIGIN }}
+          PROD_API_URL: ${{ secrets.PROD_API_URL }}
         with:
           host: ${{ secrets.AZURE_VM_IP }}
           username: ${{ secrets.AZURE_VM_USERNAME }}
@@ -120,8 +126,6 @@ jobs:
             cd apps/server && bun run build && cd ../..
 
             echo "=== FASE 4: ORKESTRASI LAYANAN (PM2) ==="
-            # Memperbaiki orkestrasi: Hanya menjalankan API jika API bertugas menyajikan file Web statis.
-            # Jika Web butuh server terpisah, ganti args Web menjadi run preview (bukan dev).
             cat > ecosystem.config.cjs << ECOEOF
             module.exports = {
               apps: [
