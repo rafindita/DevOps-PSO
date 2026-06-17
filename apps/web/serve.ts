@@ -5,10 +5,10 @@ const PORT = 3001;
 Bun.serve({
   port: PORT,
   hostname: "0.0.0.0",
-  async fetch(req) {
+  fetch(req) {
     const url = new URL(req.url);
     // Jika request mengarah ke folder assets, layani file statis
-    if (url.pathname.startsWith('/assets/')) {
+    if (url.pathname.startsWith("/assets/")) {
       return new Response(Bun.file(`./dist/client${url.pathname}`));
     }
     // Jika tidak, biarkan SSR menangani request
