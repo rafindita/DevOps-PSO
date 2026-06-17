@@ -1,4 +1,4 @@
-// server entry point
+import fs from "node:fs";
 import path from "node:path";
 import { staticPlugin } from "@elysia/static";
 import { cors } from "@elysiajs/cors";
@@ -36,24 +36,20 @@ process.on("unhandledRejection", (reason: unknown) => {
 	console.error("Unhandled Rejection:", reason);
 });
 
-import fs from "node:fs";
-
-// Menggunakan __dirname agar path selalu relatif terhadap file index.ts
-// Kita naik 2 tingkat dari __dirname (src -> server -> apps)
-// kemudian turun ke web/dist
+// Resolusi Path Vite SSR/Client:
+// import.meta.dirname saat dijalankan dari apps/server/dist/index.mjs berada di apps/server/dist
+// Path navigasi: apps/server/dist -> apps/server -> apps -> web -> dist -> client
 const frontendAssetsPath = path.join(
 	import.meta.dirname,
 	"..",
 	"..",
 	"web",
-	"dist"
-);
-const frontendIndexPath = path.join(
-	import.meta.dirname,
-	"..",
-	"..",
-	"web",
 	"dist",
+	"client"
+);
+
+const frontendIndexPath = path.join(
+	frontendAssetsPath,
 	"index.html"
 );
 
@@ -90,12 +86,13 @@ const app = new Elysia()
 		}
 	});
 
+// Validasi keberadaan direktori statis sebelum inisialisasi rute
 if (fs.existsSync(frontendAssetsPath)) {
 	app
 		.use(staticPlugin({ assets: frontendAssetsPath, prefix: "/" }))
 		.get("/*", () => Bun.file(frontendIndexPath));
 } else {
-	app.get("/*", () => "Frontend dist folder not found. Running in dev mode.");
+	app.get("/*", () => "Frontend dist/client folder not found. Please ensure 'bun run build' was executed in apps/web.");
 }
 
 export type App = typeof app;
@@ -105,6 +102,7 @@ if (process.env.NODE_ENV !== "test") {
 	const PORT = Number(process.env.PORT) || 3000;
 	app.listen({ port: PORT, hostname: "0.0.0.0" }, (server) => {
 		console.log(`Server running at http://${server?.hostname}:${server?.port}`);
+		console.log(`[Static Files] Serving from: ${frontendAssetsPath}`);
 	});
 
 	startCrawlWorker();
