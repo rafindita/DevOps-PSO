@@ -17,20 +17,15 @@ const app = new Elysia()
         timestamp: new Date().toISOString() 
     }));
 
-// Ambil port dari environment variable, default ke 3000
+// Konfigurasi Port
 const PORT = Number(process.env.PORT) || 3000;
 
 /**
- * LOGIKA RUNTIME:
- * Jika di production (saat di-bundle oleh tsdown), kita tidak memanggil .listen()
- * agar server bisa dijalankan oleh adapter atau runner yang tepat.
- * Jika di development, kita jalankan .listen() agar bisa langsung diakses.
+ * Karena kita berjalan di VM (bukan Serverless), 
+ * kita WAJIB memanggil .listen() agar server aktif.
  */
-if (process.env.NODE_ENV !== "production") {
-    app.listen({ port: PORT, hostname: "0.0.0.0" }, (server) => {
-        console.log(`API Server running at http://${server?.hostname}:${server?.port}`);
-    });
-}
+app.listen({ port: PORT, hostname: "0.0.0.0" }, (server) => {
+    console.log(`API Server running at http://${server?.hostname}:${server?.port}`);
+});
 
-// Ekspor sebagai default untuk digunakan oleh runtime produksi
 export default app;
