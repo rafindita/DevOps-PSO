@@ -5,7 +5,6 @@ const PORT = 3001;
 Bun.serve({
   port: PORT,
   hostname: "0.0.0.0",
-  // HAPUS kata 'async' di bawah ini:
   fetch(req) {
     const url = new URL(req.url);
     // Jika request mengarah ke folder assets, layani file statis
