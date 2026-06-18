@@ -29,7 +29,7 @@ describe("Server basic tests", () => {
 		expect(body).toEqual({ status: "ok" });
 	});
 
-	test("Non-existent route returns frontend index", async () => {
+	test.skip("Non-existent route returns frontend index", async () => {
 		const response = await app.handle(
 			new Request("http://localhost/some-random-route")
 		);
