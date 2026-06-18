@@ -50,6 +50,7 @@ const app = new Elysia()
 		return Bun.file(frontendIndexPath);
 	});
 
+export default app;
 export type App = typeof app;
 export { app };
 
