@@ -78,6 +78,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Prepare VM Directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AZURE_VM_IP }}
+          username: ${{ secrets.AZURE_VM_USERNAME }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          script: |
+            if [ -f ~/scholar-seek ]; then rm ~/scholar-seek; fi
+            mkdir -p ~/scholar-seek
+
       - name: Copy docker-compose file to VM
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -85,7 +95,7 @@ jobs:
           username: ${{ secrets.AZURE_VM_USERNAME }}
           key: ${{ secrets.AZURE_SSH_KEY }}
           source: "docker-compose.prod.yml"
-          target: "~/scholar-seek"
+          target: "~/scholar-seek/"
 
       - name: Execute Remote SSH Commands
         uses: appleboy/ssh-action@v1.0.3
@@ -103,6 +113,7 @@ jobs:
           key: ${{ secrets.AZURE_SSH_KEY }}
           envs: DATABASE_URL,REDIS_URL,CORS_ORIGIN,VITE_SERVER_URL,GITHUB_TOKEN,GITHUB_ACTOR,GITHUB_REPOSITORY_OWNER
           script: |
+            set -e
             cd ~/scholar-seek
             
             # Login to GHCR on the VM
