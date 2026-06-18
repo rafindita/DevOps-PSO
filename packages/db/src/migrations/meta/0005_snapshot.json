@@ -75,12 +75,8 @@
           "name": "bookmarks_user_id_users_id_fk",
           "tableFrom": "bookmarks",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -88,12 +84,8 @@
           "name": "bookmarks_paper_id_papers_id_fk",
           "tableFrom": "bookmarks",
           "tableTo": "papers",
-          "columnsFrom": [
-            "paper_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["paper_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -101,12 +93,8 @@
           "name": "bookmarks_collection_id_collections_id_fk",
           "tableFrom": "bookmarks",
           "tableTo": "collections",
-          "columnsFrom": [
-            "collection_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["collection_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -154,12 +142,8 @@
           "name": "collections_user_id_users_id_fk",
           "tableFrom": "collections",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -519,9 +503,7 @@
         "papers_doi_unique": {
           "name": "papers_doi_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "doi"
-          ]
+          "columns": ["doi"]
         }
       },
       "policies": {},
@@ -572,9 +554,7 @@
         "users_username_unique": {
           "name": "users_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         }
       },
       "policies": {},
