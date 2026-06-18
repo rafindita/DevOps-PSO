@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "papers_source_source_id_idx" ON "papers" USING btree ("source","source_id");
