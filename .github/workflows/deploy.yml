@@ -116,18 +116,6 @@ jobs:
             set -e
             cd ~/scholar-seek
             
-            export BUN_INSTALL="$HOME/.bun"
-            export PATH="$BUN_INSTALL/bin:$PATH"
-            
-            # Matikan PM2 lama secara paksa agar port 3000 bisa dipakai oleh Docker
-            if command -v pm2 &> /dev/null; then
-              pm2 delete all || true
-              pm2 kill || true
-            fi
-            
-            # Bunuh paksa jika masih ada sisa proses Bun yang membandel
-            pkill -f "bun apps/server/dist/index.mjs" || true
-            
             # Login to GHCR on the VM
             echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
             
