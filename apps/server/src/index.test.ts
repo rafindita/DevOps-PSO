@@ -14,7 +14,6 @@ mock.module("@elysia/static", () => ({
 	staticPlugin: () => (app: unknown) => app,
 }));
 
-
 import app from "./index";
 
 describe("Server basic tests", () => {
