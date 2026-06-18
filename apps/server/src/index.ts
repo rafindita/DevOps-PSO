@@ -1,10 +1,9 @@
-// server entry point
-import { Elysia } from "elysia";
-import { cors } from "@elysiajs/cors"
 import path from "node:path";
 import { staticPlugin } from "@elysia/static";
 import { cors } from "@elysiajs/cors";
+import { jwt } from "@elysiajs/jwt";
 import { Elysia } from "elysia";
+
 import { authModule } from "./modules/auth";
 import { bookmarksModule } from "./modules/bookmarks";
 import { crawlerModule } from "./modules/crawler";
@@ -31,8 +30,6 @@ const frontendIndexPath = path.join(
 	"index.html"
 );
 
-import { jwt } from "@elysiajs/jwt";
-
 const app = new Elysia()
 	.use(
 		jwt({
@@ -51,7 +48,7 @@ const app = new Elysia()
 	})
 	.use(
 		cors({
-			origin: true, // Allow all origins for now, can be restricted later
+			origin: true,
 			allowedHeaders: ["Content-Type", "Authorization"],
 			credentials: true,
 		})
@@ -86,14 +83,3 @@ if (process.env.NODE_ENV !== "test") {
 		process.exit(0);
 	});
 }
-
-const app = new Elysia()
-  // Add or update the CORS configuration here:
-  .use(cors({
-    origin: true, // or your specific frontend URL
-    allowedHeaders: ['Content-Type', 'Authorization']
-  }))
-  // ... the rest of your routes and modules
-  .use(authModule)
-  .use(bookmarksModule)
-  .listen(3000);

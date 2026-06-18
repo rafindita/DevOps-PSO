@@ -39,16 +39,19 @@ mock.module("@scholar-seek/db", () => ({
 }));
 
 let validToken: string;
+// Declare the shared app that integrates JWT + bookmarks
+let testApp: Elysia<any>;
 
 describe("Bookmarks Module", () => {
 	beforeAll(async () => {
-		const testApp = new Elysia()
+		testApp = new Elysia()
 			.use(
 				jwt({
 					name: "jwt",
 					secret: process.env.JWT_SECRET || "super-secret-jwt-key",
 				})
 			)
+			.use(bookmarksModule) // Mount it inside the app
 			.get("/sign", async ({ jwt }) => await jwt.sign({ id: "1" }));
 
 		const response = await testApp.handle(new Request("http://localhost/sign"));
@@ -56,7 +59,7 @@ describe("Bookmarks Module", () => {
 	});
 
 	test("GET /api/collections requires auth", async () => {
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/collections", {
 				method: "GET",
 			})
@@ -65,7 +68,7 @@ describe("Bookmarks Module", () => {
 	});
 
 	test("GET /api/collections returns collections", async () => {
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/collections", {
 				method: "GET",
 				headers: { Authorization: `Bearer ${validToken}` },
@@ -77,7 +80,7 @@ describe("Bookmarks Module", () => {
 	});
 
 	test("POST /api/collections creates a collection", async () => {
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/collections", {
 				method: "POST",
 				headers: {
@@ -91,7 +94,7 @@ describe("Bookmarks Module", () => {
 	});
 
 	test("DELETE /api/collections/:id deletes a collection", async () => {
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/collections/1", {
 				method: "DELETE",
 				headers: { Authorization: `Bearer ${validToken}` },
@@ -101,7 +104,7 @@ describe("Bookmarks Module", () => {
 	});
 
 	test("GET /api/bookmarks returns bookmarks", async () => {
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/bookmarks", {
 				method: "GET",
 				headers: { Authorization: `Bearer ${validToken}` },
@@ -111,7 +114,7 @@ describe("Bookmarks Module", () => {
 	});
 
 	test("POST /api/bookmarks creates a bookmark", async () => {
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/bookmarks", {
 				method: "POST",
 				headers: {
@@ -125,7 +128,7 @@ describe("Bookmarks Module", () => {
 	});
 
 	test("DELETE /api/bookmarks/:id deletes a bookmark", async () => {
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/bookmarks/1", {
 				method: "DELETE",
 				headers: { Authorization: `Bearer ${validToken}` },
@@ -145,7 +148,7 @@ describe("Bookmarks Module", () => {
 			},
 		}));
 
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/collections/999", {
 				method: "DELETE",
 				headers: { Authorization: `Bearer ${validToken}` },
@@ -165,7 +168,7 @@ describe("Bookmarks Module", () => {
 			},
 		}));
 
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/bookmarks/999", {
 				method: "DELETE",
 				headers: { Authorization: `Bearer ${validToken}` },
@@ -185,7 +188,7 @@ describe("Bookmarks Module", () => {
 			},
 		}));
 
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/bookmarks", {
 				method: "POST",
 				headers: {
@@ -209,7 +212,7 @@ describe("Bookmarks Module", () => {
 			},
 		}));
 
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/bookmarks/paper/123", {
 				method: "DELETE",
 				headers: { Authorization: `Bearer ${validToken}` },
@@ -229,7 +232,7 @@ describe("Bookmarks Module", () => {
 			},
 		}));
 
-		const response = await bookmarksModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/bookmarks/paper/123", {
 				method: "DELETE",
 				headers: { Authorization: `Bearer ${validToken}` },

@@ -1,4 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
+import { Elysia } from "elysia";
+import { jwt } from "@elysiajs/jwt";
 import { authModule } from "./index";
 
 // Mock the database
@@ -25,9 +27,19 @@ mock.module("@scholar-seek/db", () => ({
 Bun.password.hash = mock().mockResolvedValue("hashed_password");
 Bun.password.verify = mock().mockResolvedValue(true);
 
+// Create a test app wrapper to inject JWT plugin!
+const testApp = new Elysia()
+	.use(
+		jwt({
+			name: "jwt",
+			secret: "super-secret-test-key",
+		})
+	)
+	.use(authModule);
+
 describe("Auth Module", () => {
 	test("POST /api/auth/register", async () => {
-		const response = await authModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/auth/register", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -40,7 +52,6 @@ describe("Auth Module", () => {
 	});
 
 	test("POST /api/auth/login", async () => {
-		// Override select for login to return a user
 		mock.module("@scholar-seek/db", () => ({
 			db: {
 				select: mock().mockReturnValue({
@@ -59,7 +70,7 @@ describe("Auth Module", () => {
 			},
 		}));
 
-		const response = await authModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/auth/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -75,7 +86,7 @@ describe("Auth Module", () => {
 
 	test("POST /api/auth/login with wrong password", async () => {
 		Bun.password.verify = mock().mockResolvedValue(false);
-		const response = await authModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/auth/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -98,7 +109,7 @@ describe("Auth Module", () => {
 			},
 		}));
 
-		const response = await authModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/auth/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -121,7 +132,7 @@ describe("Auth Module", () => {
 			},
 		}));
 
-		const response = await authModule.handle(
+		const response = await testApp.handle(
 			new Request("http://localhost/api/auth/register", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
