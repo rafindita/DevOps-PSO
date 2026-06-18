@@ -4,7 +4,7 @@ import { papers } from "@scholar-seek/db/schema/papers";
 import { eq } from "drizzle-orm";
 
 const testPaper = {
-	id: "test:paper:123",
+	id: "123e4567-e89b-12d3-a456-426614174001",
 	title: "A Test Paper for Integration Testing",
 	abstract: "This is a test abstract.",
 	authors: ["Tester McTestface"],

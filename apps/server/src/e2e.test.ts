@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { db } from "@scholar-seek/db";
 import { users } from "@scholar-seek/db/schema/users";
+import { papers } from "@scholar-seek/db/schema/papers";
 import { eq } from "drizzle-orm";
 import app from "./index";
 
@@ -14,21 +15,31 @@ describe("True End-to-End Workflow", () => {
 		username: `testuser_${Date.now()}`,
 		password: "password123",
 	};
-	const testPaperId = "2401.00001"; // An ID we can assume might exist
+	const testPaperId = "123e4567-e89b-12d3-a456-426614174000"; // Valid UUID
+	const testPaper = {
+		id: testPaperId,
+		title: "E2E Test Paper",
+		abstract: "E2E Test abstract.",
+		authors: ["E2E Tester"],
+		journal: "Journal of E2E",
+		source: "test",
+		source_url: "http://example.com/e2e",
+	};
 
 	// Cleanup hook
 	beforeAll(async () => {
 		if (createdUserId && canConnect) {
-			await db
-				.delete(users)
-				.where(eq(users.id, createdUserId))
-				.catch(() => {
-					/* Ignore errors during cleanup */
-				});
+			await db.delete(users).where(eq(users.id, createdUserId)).catch(() => {});
+		}
+		if (canConnect) {
+			await db.delete(papers).where(eq(papers.id, testPaperId)).catch(() => {});
 		}
 	});
 
-	itif(canConnect)("1. User Registration", async () => {
+	itif(canConnect)("1. User Registration & Setup", async () => {
+		// Insert test paper so bookmarking works
+		await db.insert(papers).values(testPaper).onConflictDoNothing();
+
 		const res = await app.handle(
 			new Request("http://localhost/api/auth/register", {
 				method: "POST",
@@ -79,7 +90,7 @@ describe("True End-to-End Workflow", () => {
 		);
 		expect(res.status).toBe(200);
 		const body: any = await res.json();
-		expect(body.bookmarks.some((b: any) => b.paper_id === testPaperId)).toBe(
+		expect(body.bookmarks.some((b: any) => b.paper.id === testPaperId)).toBe(
 			true
 		);
 	});
