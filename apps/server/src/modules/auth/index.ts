@@ -1,9 +1,16 @@
 import { db } from "@scholar-seek/db";
 import { users } from "@scholar-seek/db/schema/users";
+import { jwt } from "@elysiajs/jwt";
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 
 export const authModule = new Elysia({ prefix: "/api/auth" })
+	.use(
+		jwt({
+			name: "jwt",
+			secret: process.env.JWT_SECRET || "super-secret-jwt-key",
+		})
+	)
 	.post(
 		"/register",
 		async ({ body, set }) => {

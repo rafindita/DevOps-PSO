@@ -40,7 +40,7 @@ mock.module("@scholar-seek/db", () => ({
 
 let validToken: string;
 // Declare the shared app that integrates JWT + bookmarks
-let testApp: Elysia<any>;
+let testApp: any;
 
 describe("Bookmarks Module", () => {
 	beforeAll(async () => {

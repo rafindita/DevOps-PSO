@@ -2,9 +2,16 @@ import { db } from "@scholar-seek/db";
 import { bookmarks } from "@scholar-seek/db/schema/bookmarks";
 import { collections } from "@scholar-seek/db/schema/collections";
 import { papers } from "@scholar-seek/db/schema/papers";
+import { jwt } from "@elysiajs/jwt";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 export const bookmarksModule = new Elysia({ prefix: "/api" })
+	.use(
+		jwt({
+			name: "jwt",
+			secret: process.env.JWT_SECRET || "super-secret-jwt-key",
+		})
+	)
 	.derive(async ({ jwt, headers, set }) => {
 		const auth = headers.authorization;
 		const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
