@@ -39,11 +39,13 @@ const app = new Elysia()
 		set.status = 500;
 		return { error: "Internal Server Error" };
 	})
-	  .use(cors({
-    origin: true, // Allow all origins for now, can be restricted later
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  }))
+	.use(
+		cors({
+			origin: true, // Allow all origins for now, can be restricted later
+			allowedHeaders: ["Content-Type", "Authorization"],
+			credentials: true,
+		})
+	)
 	.use(staticPlugin({ assets: frontendAssetsPath, prefix: "/" }))
 	.use(authModule)
 	.use(bookmarksModule)
