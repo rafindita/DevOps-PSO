@@ -16,8 +16,14 @@ export const api = treaty<App>(SERVER_URL, {
 			if (!options.headers) {
 				options.headers = {};
 			}
-			// @ts-expect-error
-			options.headers.authorization = `Bearer ${token}`;
+			if (options.headers instanceof Headers) {
+				options.headers.set("authorization", `Bearer ${token}`);
+			} else if (Array.isArray(options.headers)) {
+				options.headers.push(["authorization", `Bearer ${token}`]);
+			} else {
+				// @ts-expect-error
+				options.headers.authorization = `Bearer ${token}`;
+			}
 		}
 	},
 });
