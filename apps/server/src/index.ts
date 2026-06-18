@@ -1,4 +1,6 @@
 // server entry point
+import { Elysia } from "elysia";
+import { cors } from "@elysiajs/cors"
 import path from "node:path";
 import { staticPlugin } from "@elysia/static";
 import { cors } from "@elysiajs/cors";
@@ -84,3 +86,14 @@ if (process.env.NODE_ENV !== "test") {
 		process.exit(0);
 	});
 }
+
+const app = new Elysia()
+  // Add or update the CORS configuration here:
+  .use(cors({
+    origin: true, // or your specific frontend URL
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }))
+  // ... the rest of your routes and modules
+  .use(authModule)
+  .use(bookmarksModule)
+  .listen(3000);
