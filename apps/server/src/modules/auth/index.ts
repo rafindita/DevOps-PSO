@@ -1,6 +1,6 @@
+import { jwt } from "@elysiajs/jwt";
 import { db } from "@scholar-seek/db";
 import { users } from "@scholar-seek/db/schema/users";
-import { jwt } from "@elysiajs/jwt";
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 
@@ -9,6 +9,7 @@ export const authModule = new Elysia({ prefix: "/api/auth" })
 		jwt({
 			name: "jwt",
 			secret: process.env.JWT_SECRET || "super-secret-jwt-key",
+			exp: "7d",
 		})
 	)
 	.post(

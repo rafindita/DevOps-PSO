@@ -35,6 +35,7 @@ const app = new Elysia()
 		jwt({
 			name: "jwt",
 			secret: process.env.JWT_SECRET || "super-secret-jwt-key",
+			exp: "7d",
 		})
 	)
 	.onError(({ code, error, set }) => {

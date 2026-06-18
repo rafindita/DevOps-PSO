@@ -1,8 +1,8 @@
+import { jwt } from "@elysiajs/jwt";
 import { db } from "@scholar-seek/db";
 import { bookmarks } from "@scholar-seek/db/schema/bookmarks";
 import { collections } from "@scholar-seek/db/schema/collections";
 import { papers } from "@scholar-seek/db/schema/papers";
-import { jwt } from "@elysiajs/jwt";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 export const bookmarksModule = new Elysia({ prefix: "/api" })
@@ -10,6 +10,7 @@ export const bookmarksModule = new Elysia({ prefix: "/api" })
 		jwt({
 			name: "jwt",
 			secret: process.env.JWT_SECRET || "super-secret-jwt-key",
+			exp: "7d",
 		})
 	)
 	.derive(async ({ jwt, headers, set }) => {
