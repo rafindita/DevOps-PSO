@@ -116,6 +116,12 @@ jobs:
             set -e
             cd ~/scholar-seek
             
+            # Matikan PM2 lama agar port 3000 bisa dipakai oleh Docker
+            if command -v pm2 &> /dev/null; then
+              pm2 delete scholar-api || true
+              pm2 save || true
+            fi
+            
             # Login to GHCR on the VM
             echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
             
