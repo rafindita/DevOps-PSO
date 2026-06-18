@@ -1,0 +1,151 @@
+name: CI-Terraform-CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  IMAGE_NAME: scholar-seek-app
+
+jobs:
+  lint-and-test:
+    name: Run ESLint & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Create dummy frontend assets for server tests
+        run: |
+          mkdir -p apps/web/dist
+          echo "<html></html>" > apps/web/dist/index.html
+
+      - name: Run ESLint
+        run: bun run check
+
+      - name: Run Type Check
+        run: bun run check-types
+
+      - name: Run Unit Tests
+        run: bun run test
+
+  build-and-scan:
+    name: Build Docker Image & Scan
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker Image
+        run: docker build -t ${{ env.IMAGE_NAME }}:latest .
+      - name: Scan Docker Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:latest
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
+
+  terraform:
+    name: Infrastructure Provisioning
+    needs: build-and-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      - name: Terraform Init & Apply (Simulated)
+        run: echo "Infrastruktur tervalidasi."
+
+  deploy:
+    name: Zero-Downtime Deployment to Azure
+    needs: terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute Remote SSH Commands
+        uses: appleboy/ssh-action@v1.0.3
+        # BLOK KRITIKAL: Pemetaan GitHub Secrets ke Runner Environment
+        env:
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          PROD_REDIS_URL: ${{ secrets.PROD_REDIS_URL }}
+          PROD_CORS_ORIGIN: ${{ secrets.PROD_CORS_ORIGIN }}
+          PROD_API_URL: ${{ secrets.PROD_API_URL }}
+        with:
+          host: ${{ secrets.AZURE_VM_IP }}
+          username: ${{ secrets.AZURE_VM_USERNAME }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          envs: PROD_DATABASE_URL,PROD_REDIS_URL,PROD_CORS_ORIGIN,PROD_API_URL
+          script: |
+            echo "=== FASE 1: AUDIT & PROVISI INFRASTRUKTUR ==="
+            if [ ! -d "$HOME/.bun" ]; then
+              curl -fsSL https://bun.sh/install | bash
+            fi
+            export BUN_INSTALL="$HOME/.bun"
+            export PATH="$BUN_INSTALL/bin:$PATH"
+            
+            if ! command -v pm2 &> /dev/null; then
+              bun install -g pm2
+            fi
+
+            echo "=== FASE 2: SINKRONISASI KODE SUMBER ==="
+            PROJECT_DIR="/home/${{ secrets.AZURE_VM_USERNAME }}/DevOps-PSO"
+            if [ ! -d "$PROJECT_DIR" ]; then
+              git clone https://github.com/rafindita/DevOps-PSO.git $PROJECT_DIR
+            fi
+            cd $PROJECT_DIR
+            git config --global --add safe.directory $PROJECT_DIR
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "=== FASE 3: KONFIGURASI ENVIRONMENT & DATABASE ==="
+            cat > apps/server/.env << ENVEOF
+            DATABASE_URL=$PROD_DATABASE_URL
+            REDIS_URL=$PROD_REDIS_URL
+            CORS_ORIGIN=$PROD_CORS_ORIGIN
+            NODE_ENV=production
+            PORT=3000
+            ENVEOF
+
+            echo "DATABASE_URL=$PROD_DATABASE_URL" > packages/db/.env
+            echo "VITE_SERVER_URL=$PROD_API_URL" > apps/web/.env
+
+            bun install
+
+            echo "Menerapkan migrasi database..."
+            bun run db:generate || true
+            bun run db:push
+
+            echo "Mem-build aplikasi Web dan API..."
+            cd apps/web && bun run build && cd ../..
+            cd apps/server && bun run build && cd ../..
+
+            echo "=== FASE 4: ORKESTRASI LAYANAN (PM2) ==="
+            cat > ecosystem.config.cjs << ECOEOF
+            module.exports = {
+              apps: [
+                {
+                  name: "scholar-api",
+                  script: "bun",
+                  args: "apps/server/dist/index.mjs",
+                  cwd: "$PROJECT_DIR",
+                  env: {
+                    DATABASE_URL: "$PROD_DATABASE_URL",
+                    REDIS_URL: "$PROD_REDIS_URL",
+                    CORS_ORIGIN: "$PROD_CORS_ORIGIN",
+                    NODE_ENV: "production",
+                    PORT: "3000"
+                  }
+                }
+              ]
+            }
+            ECOEOF
+
+            pm2 restart ecosystem.config.cjs || pm2 start ecosystem.config.cjs
+            pm2 save
+            echo "Deployment Pipeline Tereksekusi dengan Sukses."

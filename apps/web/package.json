@@ -5,6 +5,7 @@
   "scripts": {
     "build": "vite build",
     "check-types": "tsc --noEmit",
+    "test": "bun test --preload ./src/test-setup.ts ./src",
     "serve": "vite preview",
     "dev": "vite dev"
   },
@@ -28,13 +29,15 @@
     "sonner": "catalog:",
     "tailwindcss": "catalog:",
     "vite-tsconfig-paths": "^5.1.4",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@scholar-seek/config": "workspace:*",
     "@tanstack/react-router-devtools": "^1.141.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",
+    "@types/jsdom": "^28.0.3",
     "@types/katex": "^0.16.8",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

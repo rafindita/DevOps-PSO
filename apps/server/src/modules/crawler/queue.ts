@@ -1,9 +1,8 @@
 import { db } from "@scholar-seek/db";
 import { crawlHistory } from "@scholar-seek/db/schema/crawl-history";
 import { papers } from "@scholar-seek/db/schema/papers";
-import { env } from "@scholar-seek/env/server";
-import { Queue, Worker } from "bullmq";
-import { desc, eq, sql } from "drizzle-orm";
+import { Queue, type Worker } from "bullmq";
+import { desc, eq } from "drizzle-orm";
 import { cacheDel } from "../../lib/cache";
 import { getRedis } from "../../lib/redis";
 import { arxivAdapter } from "./sources/arxiv";
@@ -22,12 +21,24 @@ const adapters: Record<string, SourceAdapter> = {
 	arxiv: arxivAdapter,
 };
 
-let queue: Queue<CrawlJobData> | null = null;
+let queue: Queue | null = null;
 
 export function getCrawlQueue(): Queue<CrawlJobData> {
 	if (!queue) {
-		queue = new Queue<CrawlJobData>(QUEUE_NAME, {
-			connection: getRedis(),
+		const redis = getRedis();
+		if (!redis) {
+			console.warn("[crawler] Redis connection unavailable. Using mock queue.");
+			queue = {
+				add: () => {
+					console.log("[mock queue] Simulated job enqueue. Redis is offline.");
+					return Promise.resolve({ id: "mock-job-id" });
+				},
+				removeRepeatable: () => undefined,
+			} as unknown as Queue;
+			return queue as unknown as Queue<CrawlJobData>;
+		}
+		const newQueue = new Queue(QUEUE_NAME, {
+			connection: redis,
 			defaultJobOptions: {
 				attempts: 2,
 				backoff: { type: "exponential", delay: 5000 },
@@ -35,11 +46,20 @@ export function getCrawlQueue(): Queue<CrawlJobData> {
 				removeOnFail: 100,
 			},
 		});
+
+		newQueue.on("error", (err) => {
+			console.warn(
+				"[BullMQ] Queue connection error gracefully handled:",
+				err.message
+			);
+		});
+
+		queue = newQueue as unknown as Queue;
 	}
-	return queue;
+	return queue as unknown as Queue<CrawlJobData>;
 }
 
-async function processJob(
+export async function processJob(
 	historyId: string,
 	source: string,
 	options: CrawlOptions
@@ -55,29 +75,57 @@ async function processJob(
 	const errors: string[] = [];
 
 	try {
+		// 1. SMART DIFF PROBE: Pre-load all existing IDs into memory for O(1) lookup
+		console.log(
+			`[crawler] Executing Smart Diff Probe for source: ${source}...`
+		);
+		const allExisting = await db
+			.select({ source_id: papers.source_id })
+			.from(papers)
+			.where(eq(papers.source, source));
+		const existingSet = new Set(allExisting.map((p) => p.source_id));
+		console.log(
+			`[crawler] Probe complete: ${existingSet.size} existing papers cached in memory.`
+		);
+
 		for await (const batch of adapter.crawl(options)) {
 			papersFound += batch.length;
 
 			try {
-				const result = await db
-					.insert(papers)
-					.values(batch)
-					.onConflictDoUpdate({
-						target: [papers.source, papers.source_id],
-						set: {
-							title: sql`excluded.title`,
-							abstract: sql`excluded.abstract`,
-							authors: sql`excluded.authors`,
-							keywords: sql`excluded.keywords`,
-							published_at: sql`excluded.published_at`,
-							journal: sql`excluded.journal`,
-							doi: sql`excluded.doi`,
-						},
-					})
-					.returning({ id: papers.id });
+				// 2. PRE-FILTERING
+				const duplicates = batch.filter((p) =>
+					existingSet.has(p.source_id ?? null)
+				);
+				const newPapers = batch.filter(
+					(p) => !existingSet.has(p.source_id ?? null)
+				);
 
-				papersInserted += result.length;
-				papersSkipped += batch.length - result.length;
+				// 3. PERFORMANCE LOGGING
+				console.log(
+					`[CRAWLER] Found ${batch.length} total papers from source.`
+				);
+				console.log(
+					`[CRAWLER] Found ${duplicates.length} duplicates, skipping.`
+				);
+				console.log(
+					`[CRAWLER] Proceeding to insert ${newPapers.length} new papers.`
+				);
+
+				papersSkipped += duplicates.length;
+
+				// Update memory set so we don't insert duplicates within the same run
+				for (const p of newPapers) {
+					existingSet.add(p.source_id ?? null);
+				}
+
+				if (newPapers.length > 0) {
+					const result = await db
+						.insert(papers)
+						.values(newPapers)
+						.returning({ id: papers.id });
+
+					papersInserted += result.length;
+				}
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
 				errors.push(`Batch insert failed: ${msg}`);
@@ -180,7 +228,7 @@ export async function cleanupStuckJobs(): Promise<void> {
 	}
 }
 
-let worker: Worker<CrawlJobData> | null = null;
+let worker: Worker | null = null;
 
 export async function stopCrawlWorker(): Promise<void> {
 	if (!worker) {
@@ -195,59 +243,8 @@ export async function stopCrawlWorker(): Promise<void> {
 }
 
 export function startCrawlWorker(): void {
-	if (worker) {
-		return;
-	}
-
-	worker = new Worker<CrawlJobData>(
-		QUEUE_NAME,
-		async (job) => {
-			let { source, options, historyId } = job.data;
-			console.log(`[crawler] starting job ${job.id} — source=${source}`);
-
-			// Auto-scheduled jobs don't have a pre-created history record
-			if (historyId === "__auto__") {
-				const resolved = await createAutoHistoryRecord(source, options);
-				historyId = resolved.historyId;
-				options = resolved.options;
-			}
-
-			await processJob(historyId, source, options);
-			console.log(`[crawler] completed job ${job.id}`);
-		},
-		{
-			connection: getRedis(),
-			concurrency: 1,
-		}
-	);
-
-	worker.on("failed", (job, err) => {
-		console.error(`[crawler] job ${job?.id} failed:`, err.message);
-	});
-
-	// Register a daily production crawl via a repeatable job
-	if (env.NODE_ENV === "production") {
-		scheduleDailyCrawl().catch((err) => {
-			console.error("[crawler] failed to register daily job:", err);
-		});
-	}
-}
-
-async function scheduleDailyCrawl(): Promise<void> {
-	// The daily job itself creates a history record at run time via a sentinel wrapper.
-	// We use a special job name and handle it in the worker.
-	const q = getCrawlQueue();
-
-	// Remove any stale daily job first, then re-add with current settings.
-	await q.removeRepeatable("daily-arxiv", { pattern: "0 2 * * *" });
-	await q.add(
-		"daily-arxiv-trigger",
-		// historyId is empty; the service.enqueueAutoJob creates it at run time
-		{ source: "arxiv", options: {}, historyId: "__auto__" },
-		{
-			repeat: { pattern: "0 2 * * *" },
-			jobId: "daily-arxiv",
-		}
+	console.log(
+		"[crawler] Worker initialization FORCEFULLY DISABLED. Running in sync mode."
 	);
 }
 

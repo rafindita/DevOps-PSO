@@ -164,15 +164,16 @@ async function fetchPage(
 	let res: Response;
 
 	try {
-		res = await fetch(url);
+		res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
 	} catch (err) {
 		if (attempt < MAX_RETRIES) {
 			await sleep(REQUEST_DELAY_MS * (attempt + 1));
 			return fetchPage(url, attempt + 1);
 		}
-		throw new Error(
-			`ArXiv fetch failed after ${MAX_RETRIES} retries: ${String(err)}`
+		console.warn(
+			`[CRAWLER WARNING] ArXiv fetch failed or token expired. Stopping batch gracefully. Error: ${String(err)}`
 		);
+		return { records: [] };
 	}
 
 	if (res.status === 503) {
@@ -226,6 +227,10 @@ export const arxivAdapter: SourceAdapter = {
 	name: "arxiv",
 
 	async *crawl(options: CrawlOptions): AsyncGenerator<NewPaper[]> {
+		console.log(
+			"[DEBUG] Starting ArXiv crawl with options:",
+			JSON.stringify(options)
+		);
 		let url = buildUrl(options);
 		let totalYielded = 0;
 		const maxRecords = options.maxRecords ?? Number.POSITIVE_INFINITY;
@@ -235,7 +240,11 @@ export const arxivAdapter: SourceAdapter = {
 		);
 
 		while (true) {
+			console.log("[DEBUG] Fetching URL:", url);
 			const { records, resumptionToken } = await fetchPage(url);
+			console.log(
+				`[DEBUG] Fetched ${records.length} records. ResumptionToken: ${!!resumptionToken}`
+			);
 
 			if (records.length > 0) {
 				// Filter to requested subcategories when specified

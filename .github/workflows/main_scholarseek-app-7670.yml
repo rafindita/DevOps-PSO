@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read #This is required for actions/checkout
+      packages: write #This is required to push to ghcr.io
 
     steps:
       - uses: actions/checkout@v4
@@ -24,39 +25,39 @@ jobs:
       - name: Log in to container registry
         uses: docker/login-action@v2
         with:
-          registry: ghcr.io/
-          username: ${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_46C78BC6AB774FFAB1957A3C0A0BCE9E }}
-          password: ${{ secrets.AZUREAPPSERVICE_CONTAINERPASSWORD_9509721B31324AC0B7367D7CF97B7FFD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push container image to registry
         uses: docker/build-push-action@v3
         with:
           context: .
           push: true
-          tags: ghcr.io/danielbarz/devops-pso:${{ github.sha }}
+          tags: ghcr.io/rafindita/devops-pso:${{ github.sha }}
           file: ./Dockerfile
 
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
-    needs: build
-    
-    steps:
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E8E9B0FF7D9145119136CD4C5F9E830A }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_FAFB86707A7D4AC1837A80AA08354B01 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AC236E5BA7E94009B12CBC69C4951052 }}
-
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: 'scholarseek-app-7670'
-          slot-name: 'Production'
-          images: 'ghcr.io/danielbarz/devops-pso:${{ github.sha }}'
+#   deploy:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       id-token: write #This is required for requesting the JWT
+#       contents: read #This is required for actions/checkout
+# 
+#     needs: build
+#     
+#     steps:
+#       
+#       - name: Login to Azure
+#         uses: azure/login@v2
+#         with:
+#           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E8E9B0FF7D9145119136CD4C5F9E830A }}
+#           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_FAFB86707A7D4AC1837A80AA08354B01 }}
+#           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AC236E5BA7E94009B12CBC69C4951052 }}
+# 
+#       - name: Deploy to Azure Web App
+#         id: deploy-to-webapp
+#         uses: azure/webapps-deploy@v2
+#         with:
+#           app-name: 'scholarseek-app-7670'
+#           slot-name: 'Production'
+#           images: 'ghcr.io/rafindita/devops-pso:${{ github.sha }}'

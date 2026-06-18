@@ -118,30 +118,14 @@ function searchCacheKey(params: object): string {
 	return `papers:search:${JSON.stringify(params)}`;
 }
 
-export async function searchPapers(params: {
+function buildConditions(params: {
 	q?: string;
-	page?: number;
-	pageSize?: number;
-	sortBy?: SortByType;
 	author?: string;
 	journal?: string | string[];
 	keyword?: string | string[];
 	yearFrom?: number;
 	yearTo?: number;
-}): Promise<SearchResultType> {
-	const cacheKey = searchCacheKey(params);
-	const cached = await cacheGet<SearchResultType>(cacheKey);
-	if (cached) {
-		return cached;
-	}
-	const page = Math.max(1, params.page ?? 1);
-	const pageSize = [10, 20, 50].includes(params.pageSize ?? 20)
-		? (params.pageSize ?? 20)
-		: 20;
-	const sortBy: SortByType = params.sortBy ?? "relevance";
-
-	// Search-only condition — used for facet computation so facets always
-	// reflect the full result set for the query, not the active filters.
+}) {
 	const searchConditions: (SQL | undefined)[] = [];
 
 	if (params.q) {
@@ -160,7 +144,6 @@ export async function searchPapers(params: {
 	const searchOnlyWhereClause =
 		searchConditions.length > 0 ? and(...searchConditions) : undefined;
 
-	// Filter conditions — applied on top of the search for paginated results.
 	const filterConditions: (SQL | undefined)[] = [...searchConditions];
 
 	if (params.author) {
@@ -200,49 +183,93 @@ export async function searchPapers(params: {
 	const whereClause =
 		filterConditions.length > 0 ? and(...filterConditions) : undefined;
 
+	return { searchOnlyWhereClause, whereClause };
+}
+
+export async function searchPapers(params: {
+	q?: string;
+	page?: number;
+	pageSize?: number;
+	sortBy?: SortByType;
+	author?: string;
+	journal?: string | string[];
+	keyword?: string | string[];
+	yearFrom?: number;
+	yearTo?: number;
+}): Promise<SearchResultType> {
+	const cacheKey = searchCacheKey(params);
+	const cached = await cacheGet<SearchResultType>(cacheKey);
+	if (cached) {
+		return cached;
+	}
+	const page = Math.max(1, params.page ?? 1);
+	const pageSize = [10, 20, 50].includes(params.pageSize ?? 20)
+		? (params.pageSize ?? 20)
+		: 20;
+	const sortBy: SortByType = params.sortBy ?? "relevance";
+
+	const { searchOnlyWhereClause, whereClause } = buildConditions(params);
+
 	const offset = (page - 1) * pageSize;
 	const orderBy = buildOrderBy(sortBy);
 
-	const [paginatedRows, countResult, facetRows] = await Promise.all([
-		orderBy
-			? db
-					.select()
-					.from(papers)
-					.where(whereClause)
-					.orderBy(orderBy)
-					.limit(pageSize)
-					.offset(offset)
-			: db
-					.select()
-					.from(papers)
-					.where(whereClause)
-					.limit(pageSize)
-					.offset(offset),
-		db.select({ count: count() }).from(papers).where(whereClause),
-		db
-			.select({
-				authors: papers.authors,
-				keywords: papers.keywords,
-				journal: papers.journal,
-				published_at: papers.published_at,
-			})
-			.from(papers)
-			.where(searchOnlyWhereClause),
-	]);
+	try {
+		console.log(
+			"[DEBUG] Searching papers with params:",
+			JSON.stringify(params)
+		);
+		console.log("[DEBUG] Executing database query...");
 
-	const total = Number(countResult[0]?.count ?? 0);
-	const facets = buildFacets(facetRows);
+		const [paginatedRows, countResult, facetRows] = await Promise.all([
+			orderBy
+				? db
+						.select()
+						.from(papers)
+						.where(whereClause)
+						.orderBy(orderBy)
+						.limit(pageSize)
+						.offset(offset)
+				: db
+						.select()
+						.from(papers)
+						.where(whereClause)
+						.limit(pageSize)
+						.offset(offset),
+			db.select({ count: count() }).from(papers).where(whereClause),
+			db
+				.select({
+					authors: papers.authors,
+					keywords: papers.keywords,
+					journal: papers.journal,
+					published_at: papers.published_at,
+				})
+				.from(papers)
+				.where(searchOnlyWhereClause),
+		]);
 
-	const result: SearchResultType = {
-		papers: paginatedRows.map(toPaperResponse),
-		total,
-		page,
-		pageSize,
-		facets,
-	};
+		const total = Number(countResult[0]?.count ?? 0);
+		const facets = buildFacets(facetRows);
 
-	await cacheSet(searchCacheKey(params), result, 300);
-	return result;
+		const result: SearchResultType = {
+			papers: paginatedRows.map(toPaperResponse),
+			total,
+			page,
+			pageSize,
+			facets,
+		};
+
+		await cacheSet(searchCacheKey(params), result, 300);
+		return result;
+	} catch (error: unknown) {
+		console.error(
+			"[DEBUG] Error executing database query:",
+			error instanceof Error ? error.message : String(error)
+		);
+		if (error instanceof Error) {
+			console.error("[DEBUG] Stack trace:", error.stack);
+		}
+		throw error;
+	}
 }
 
 export async function getPaper(id: string): Promise<PaperResponseType> {

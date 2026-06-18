@@ -1,20 +1,29 @@
-FROM oven/bun:1.3.8
+# Build stage
+FROM oven/bun:1-alpine AS builder
+
 WORKDIR /app
 
-# 1. Bawa SEMUA file kodemu masuk tanpa dipisah-pisah
-COPY . .
+COPY package.json bun.lock tsconfig.json turbo.json ./
+COPY packages packages
+COPY apps apps
 
-# 2. Install dependencies di tempat (Semua symlink monorepo dijamin 100% utuh)
 RUN bun install --frozen-lockfile
 
-# 3. Lakukan proses Build
 ENV NODE_ENV=production
 ENV SKIP_ENV_VALIDATION=1
-RUN bun run build
+RUN cd apps/server && bun run build
 
-# 4. Buka Port 3000 untuk Azure
+# Runtime stage
+FROM oven/bun:1-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/apps/server/dist ./dist
+COPY --from=builder /app/apps/server/package.json ./
+
 ENV PORT=3000
 EXPOSE 3000
 
-# 5. Jalankan server Elysia (yang otomatis akan memanggil server TanStack)
-CMD ["bun", "run", "apps/server/dist/index.mjs"]
+ENV NODE_ENV=production
+
+CMD ["bun", "run", "dist/index.mjs"]

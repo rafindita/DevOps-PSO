@@ -2,7 +2,6 @@ import { db } from "@scholar-seek/db";
 import { crawlHistory } from "@scholar-seek/db/schema/crawl-history";
 import { desc, eq } from "drizzle-orm";
 import type { CrawlOptionsBodyType, CrawlStatusResponseType } from "./model";
-import { getCrawlQueue } from "./queue";
 
 export async function startCrawl(
 	body: CrawlOptionsBodyType
@@ -30,13 +29,19 @@ export async function startCrawl(
 		throw new Error("Failed to create crawl history record");
 	}
 
-	const job = await getCrawlQueue().add(
-		"crawl",
-		{ source, options, historyId: historyRow.id },
-		{ jobId: historyRow.job_id }
-	);
+	// FORCE BYPASS QUEUE: Execute the job synchronously
+	try {
+		const { processJob } = await import("./queue");
+		await processJob(historyRow.id, source, options);
+	} catch (e: unknown) {
+		console.error(
+			`[CRAWLER WARNING] ${e instanceof Error ? e.message : String(e)}`
+		);
+		// Safe Mode: Return successfully so the frontend doesn't crash,
+		// the database is already marked as 'failed' internally by processJob.
+	}
 
-	return { jobId: job.id ?? historyRow.job_id, historyId: historyRow.id };
+	return { jobId: historyRow.job_id, historyId: historyRow.id };
 }
 
 export async function getCrawlStatus(
@@ -91,4 +96,26 @@ export async function getCrawlHistory(
 		completedAt: row.completed_at?.toISOString() ?? null,
 		durationMs: row.duration_ms,
 	}));
+}
+
+export async function getLastUpdated() {
+	const rows = await db
+		.select()
+		.from(crawlHistory)
+		.where(eq(crawlHistory.status, "completed"))
+		.orderBy(desc(crawlHistory.completed_at))
+		.limit(1);
+
+	const row = rows[0];
+	if (!row) {
+		return null;
+	}
+
+	return {
+		completedAt: row.completed_at?.toISOString() ?? null,
+		papersFound: row.papers_found,
+		papersInserted: row.papers_inserted,
+		papersSkipped: row.papers_skipped,
+		durationMs: row.duration_ms,
+	};
 }

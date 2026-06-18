@@ -11,6 +11,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ArxivAbstract } from "../../components/paper/arxiv-abstract";
+import { BookmarkButton } from "../../components/paper/bookmark-button";
 import { usePaper, useRelatedPapers } from "../../lib/hooks/use-papers";
 import { getSearchState } from "../../lib/search-state";
 import { formatDate } from "../../lib/utils";
@@ -95,9 +96,10 @@ function PaperPage() {
 					>
 						← Back to search
 					</Link>
-					<h1 className="mt-4 font-bold text-3xl leading-tight">
-						{paper.title}
-					</h1>
+					<div className="mt-4 flex items-start justify-between gap-4">
+						<h1 className="font-bold text-3xl leading-tight">{paper.title}</h1>
+						<BookmarkButton className="mt-1 shrink-0" paperId={paper.id} />
+					</div>
 					<div className="mt-4 flex flex-wrap gap-1.5">
 						{paper.authors.map((author) => (
 							<Link key={author} search={{ author, q: author }} to="/search">

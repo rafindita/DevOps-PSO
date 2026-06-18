@@ -8,4 +8,5 @@ export const env = createEnv({
 	},
 	runtimeEnv: import.meta.env as Record<string, string | undefined>,
 	emptyStringAsUndefined: true,
+	skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });

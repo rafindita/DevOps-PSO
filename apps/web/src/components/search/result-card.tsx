@@ -9,6 +9,7 @@ import { Link } from "@tanstack/react-router";
 import { formatDate } from "../../lib/utils";
 import type { Paper } from "../../types/paper";
 import { ArxivAbstract } from "../paper/arxiv-abstract";
+import { BookmarkButton } from "../paper/bookmark-button";
 
 interface ResultCardProps {
 	paper: Paper;
@@ -22,8 +23,11 @@ function storeSearchState() {
 
 export function ResultCard({ paper }: ResultCardProps) {
 	return (
-		<Card className="transition-colors hover:border-primary" variant="elevated">
-			<CardHeader>
+		<Card
+			className="group relative transition-colors hover:border-primary"
+			variant="elevated"
+		>
+			<CardHeader className="pr-14">
 				<Link
 					onClick={storeSearchState}
 					params={{ id: paper.id }}
@@ -33,6 +37,10 @@ export function ResultCard({ paper }: ResultCardProps) {
 						{paper.title}
 					</CardTitle>
 				</Link>
+				<BookmarkButton
+					className="absolute top-4 right-4 z-10 text-muted-foreground hover:text-primary"
+					paperId={paper.id}
+				/>
 			</CardHeader>
 			<CardContent className="space-y-2">
 				<Link
