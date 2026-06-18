@@ -37,64 +37,62 @@ function AuthSection() {
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 
+	const handleLogin = async () => {
+		const { data, error: apiError } = await api.api.auth.login.post({
+			username,
+			password,
+		});
+		if (apiError) {
+			const errorMsg =
+				typeof apiError.value === "string"
+					? apiError.value
+					: (apiError.value as Record<string, unknown>)?.error ||
+						"Authentication failed";
+			setError(String(errorMsg));
+			return;
+		}
+		if (data?.user && data?.token) {
+			// biome-ignore lint/suspicious/noExplicitAny: treaty type issue
+			setAuth(data.user as any, data.token);
+			setIsOpen(false);
+		}
+	};
+
+	const handleRegister = async () => {
+		const { data, error: apiError } = await api.api.auth.register.post({
+			username,
+			password,
+		});
+		if (apiError) {
+			const errorMsg =
+				typeof apiError.value === "string"
+					? apiError.value
+					: (apiError.value as Record<string, unknown>)?.error ||
+						"Registration failed";
+			setError(String(errorMsg));
+			return;
+		}
+		if (data?.user) {
+			const { data: loginData, error: loginError } =
+				await api.api.auth.login.post({ username, password });
+			if (loginError || !loginData?.token) {
+				setError("Registered successfully! Please login.");
+				return;
+			}
+			// biome-ignore lint/suspicious/noExplicitAny: treaty type issue
+			setAuth(loginData.user as any, loginData.token);
+			setIsOpen(false);
+		}
+	};
+
 	const handleAuth = async (isLogin: boolean) => {
 		try {
 			setIsLoading(true);
 			setError("");
-
 			if (isLogin) {
-				// Login flow — call directly, never store Treaty endpoint in a variable
-				const { data, error: apiError } = await api.api.auth.login.post({
-					username,
-					password,
-				});
-
-				if (apiError) {
-					const errorMsg =
-						typeof apiError.value === "string"
-							? apiError.value
-							: (apiError.value as Record<string, unknown>)?.error ||
-								"Authentication failed";
-					setError(String(errorMsg));
-					return;
-				}
-
-				if (data?.user && data?.token) {
-					// biome-ignore lint/suspicious/noExplicitAny: treaty type issue
-					setAuth(data.user as any, data.token);
-					setIsOpen(false);
-				}
+				await handleLogin();
 			} else {
-				// Register flow
-				const { data, error: apiError } = await api.api.auth.register.post({
-					username,
-					password,
-				});
-
-				if (apiError) {
-					const errorMsg =
-						typeof apiError.value === "string"
-							? apiError.value
-							: (apiError.value as Record<string, unknown>)?.error ||
-								"Registration failed";
-					setError(String(errorMsg));
-					return;
-				}
-
-				if (data?.user) {
-					// Auto-login after successful registration
-					const { data: loginData, error: loginError } =
-						await api.api.auth.login.post({ username, password });
-
-					if (loginError || !loginData?.token) {
-						setError("Registered successfully! Please login.");
-						return;
-					}
-
-					// biome-ignore lint/suspicious/noExplicitAny: treaty type issue
-					setAuth(loginData.user as any, loginData.token);
-					setIsOpen(false);
-				}
+				await handleRegister();
 			}
 		} catch (_e: unknown) {
 			setError("An error occurred");
