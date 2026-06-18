@@ -12,7 +12,10 @@ Bun.serve({
 		// Proxy API requests to backend
 		if (url.pathname.startsWith("/api/")) {
 			// Di dalam Docker, container server bisa diakses langsung via http://server:3000
-			const targetUrl = process.env.NODE_ENV === "production" ? "http://server:3000" : "http://localhost:3000";
+			const targetUrl =
+				process.env.NODE_ENV === "production"
+					? "http://server:3000"
+					: "http://localhost:3000";
 			const apiUrl = new URL(url.pathname + url.search, targetUrl);
 			return fetch(new Request(apiUrl, req));
 		}
