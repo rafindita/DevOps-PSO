@@ -28,6 +28,7 @@ import { useAuthStore } from "../../lib/store/auth";
 import { formatDate } from "../../lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 
+// biome-ignore lint/correctness/noUnusedImports: for demo purposes
 function AuthSection() {
 	const [isMounted, setIsMounted] = useState(false);
 	const { user, setAuth, logout } = useAuthStore();
@@ -365,11 +366,9 @@ export default function Header() {
 					<Link className="font-semibold text-xl" to="/">
 						Scholar Seek
 					</Link>
-					// biome-ignore lint/correctness/noUnusedImports: for demo purposes
 					{/* <ScrapingSection /> */}
 				</div>
 				<div className="flex items-center gap-4">
-					// biome-ignore lint/correctness/noUnusedImports: for demo purposes
 					{/* <AuthSection /> */}
 					<ThemeToggle />
 				</div>

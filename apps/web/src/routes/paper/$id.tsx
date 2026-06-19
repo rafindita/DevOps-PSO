@@ -11,6 +11,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ArxivAbstract } from "../../components/paper/arxiv-abstract";
+// biome-ignore lint/correctness/noUnusedImports: for demo purposes
 import { BookmarkButton } from "../../components/paper/bookmark-button";
 import { usePaper, useRelatedPapers } from "../../lib/hooks/use-papers";
 import { getSearchState } from "../../lib/search-state";
@@ -98,7 +99,6 @@ function PaperPage() {
 					</Link>
 					<div className="mt-4 flex items-start justify-between gap-4">
 						<h1 className="font-bold text-3xl leading-tight">{paper.title}</h1>
-						// biome-ignore lint/correctness/noUnusedImports: for demo purposes
 						{/* <BookmarkButton className="mt-1 shrink-0" paperId={paper.id} /> */}
 					</div>
 					<div className="mt-4 flex flex-wrap gap-1.5">
