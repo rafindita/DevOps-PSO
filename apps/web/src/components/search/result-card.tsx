@@ -6,6 +6,7 @@ import {
 	CardTitle,
 } from "@scholar-seek/ui/components/card";
 import { Link } from "@tanstack/react-router";
+import { BookmarkButton } from "../../components/paper/bookmark-button";
 import { formatDate } from "../../lib/utils";
 import type { Paper } from "../../types/paper";
 import { ArxivAbstract } from "../paper/arxiv-abstract";
@@ -36,10 +37,10 @@ export function ResultCard({ paper }: ResultCardProps) {
 						{paper.title}
 					</CardTitle>
 				</Link>
-				{/* <BookmarkButton
+				<BookmarkButton
 					className="absolute top-4 right-4 z-10 text-muted-foreground hover:text-primary"
 					paperId={paper.id}
-				/> */}
+				/>
 			</CardHeader>
 			<CardContent className="space-y-2">
 				<Link
