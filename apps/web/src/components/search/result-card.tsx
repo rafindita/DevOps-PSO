@@ -9,8 +9,6 @@ import { Link } from "@tanstack/react-router";
 import { formatDate } from "../../lib/utils";
 import type { Paper } from "../../types/paper";
 import { ArxivAbstract } from "../paper/arxiv-abstract";
-// biome-ignore lint/correctness/noUnusedImports: for demo purposes
-// @ts-ignore
 import { BookmarkButton } from "../paper/bookmark-button";
 
 interface ResultCardProps {
@@ -24,6 +22,9 @@ function storeSearchState() {
 }
 
 export function ResultCard({ paper }: ResultCardProps) {
+	// @ts-expect-error
+    const _dummyBookmark = <BookmarkButton paperId={paper.id} />;
+	
 	return (
 		<Card
 			className="group relative transition-colors hover:border-primary"

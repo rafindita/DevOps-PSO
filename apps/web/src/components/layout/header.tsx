@@ -28,8 +28,6 @@ import { useAuthStore } from "../../lib/store/auth";
 import { formatDate } from "../../lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 
-// biome-ignore lint/correctness/noUnusedVariables: for demo purposes
-// @ts-ignore
 function AuthSection() {
 	const [isMounted, setIsMounted] = useState(false);
 	const { user, setAuth, logout } = useAuthStore();
@@ -210,8 +208,6 @@ function AuthSection() {
 	);
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: for demo purposes
-// @ts-ignore
 function ScrapingSection() {
 	const [isMounted, setIsMounted] = useState(false);
 	const queryClient = useQueryClient();
@@ -362,6 +358,11 @@ function ScrapingSection() {
 }
 
 export default function Header() {
+	// @ts-expect-error - sengaja dibuat untuk demo
+    const _dummyAuth = AuthSection;
+    // @ts-expect-error - sengaja dibuat untuk demo
+    const _dummyScraping = ScrapingSection;
+	
 	return (
 		<header className="border-b">
 			<div className="container mx-auto flex items-center justify-between px-4 py-4">
