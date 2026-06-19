@@ -28,7 +28,7 @@ import { useAuthStore } from "../../lib/store/auth";
 import { formatDate } from "../../lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 
-export function AuthSection() {
+function AuthSection() {
 	const [isMounted, setIsMounted] = useState(false);
 	const { user, setAuth, logout } = useAuthStore();
 	const [isOpen, setIsOpen] = useState(false);
@@ -208,7 +208,7 @@ export function AuthSection() {
 	);
 }
 
-export function ScrapingSection() {
+function ScrapingSection() {
 	const [isMounted, setIsMounted] = useState(false);
 	const queryClient = useQueryClient();
 	const { activeJobId, setActiveJobId } = useAuthStore();
@@ -360,17 +360,15 @@ export function ScrapingSection() {
 export default function Header() {
 	return (
 		<header className="border-b">
-			{false}
-			{false}
 			<div className="container mx-auto flex items-center justify-between px-4 py-4">
 				<div className="flex items-center gap-6">
 					<Link className="font-semibold text-xl" to="/">
 						Scholar Seek
 					</Link>
-					{/* <ScrapingSection /> */}
+					<ScrapingSection />
 				</div>
 				<div className="flex items-center gap-4">
-					{/* <AuthSection /> */}
+					<AuthSection />
 					<ThemeToggle />
 				</div>
 			</div>
