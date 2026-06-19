@@ -29,6 +29,7 @@ import { formatDate } from "../../lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 
 // biome-ignore lint/correctness/noUnusedVariables: for demo purposes
+// @ts-ignore
 function AuthSection() {
 	const [isMounted, setIsMounted] = useState(false);
 	const { user, setAuth, logout } = useAuthStore();
@@ -210,6 +211,7 @@ function AuthSection() {
 }
 
 // biome-ignore lint/correctness/noUnusedVariables: for demo purposes
+// @ts-ignore
 function ScrapingSection() {
 	const [isMounted, setIsMounted] = useState(false);
 	const queryClient = useQueryClient();

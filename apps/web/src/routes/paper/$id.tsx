@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { ArxivAbstract } from "../../components/paper/arxiv-abstract";
 // biome-ignore lint/correctness/noUnusedImports: for demo purposes
+// @ts-ignore
 import { BookmarkButton } from "../../components/paper/bookmark-button";
 import { usePaper, useRelatedPapers } from "../../lib/hooks/use-papers";
 import { getSearchState } from "../../lib/search-state";

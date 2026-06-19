@@ -10,6 +10,7 @@ import { formatDate } from "../../lib/utils";
 import type { Paper } from "../../types/paper";
 import { ArxivAbstract } from "../paper/arxiv-abstract";
 // biome-ignore lint/correctness/noUnusedImports: for demo purposes
+// @ts-ignore
 import { BookmarkButton } from "../paper/bookmark-button";
 
 interface ResultCardProps {
